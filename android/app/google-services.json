@@ -1,0 +1,162 @@
+{
+  "project_info": {
+    "project_number": "304233863011",
+    "project_id": "test-68e46",
+    "storage_bucket": "test-68e46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:d393b92fd4867f4f022556",
+        "android_client_info": {
+          "package_name": "com.example.ai_dress_up"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:21302cf54b71a4f3022556",
+        "android_client_info": {
+          "package_name": "com.example.ai_video_generator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:05f23c657458ea95022556",
+        "android_client_info": {
+          "package_name": "com.example.ai_video_generator_app_2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:8550737784b5efd8022556",
+        "android_client_info": {
+          "package_name": "com.example.street_view"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:cdc18def2924c43b022556",
+        "android_client_info": {
+          "package_name": "dep.kbht.vidsmeaivideogenerator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:42af18dadfa44054022556",
+        "android_client_info": {
+          "package_name": "flut.testingapps.forallplans"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:03335ef573cd65c1022556",
+        "android_client_info": {
+          "package_name": "sun.arist.kissvideomakeraitwerkgeneratorjushf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304233863011:android:bacd68ea18a1b7c5022556",
+        "android_client_info": {
+          "package_name": "sun.iris.aikissvideoaifaceswapskjhdfu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxFaJOvYQkOzyCemRtfFWngbUf8BK27ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
