@@ -158,6 +158,7 @@ class _IntroScreenState extends State<IntroScreen> {
                       text: _buttonText(introPages),
                     ),
                   ),
+                  50.verticalSpace,
                 ],
               ),
             );

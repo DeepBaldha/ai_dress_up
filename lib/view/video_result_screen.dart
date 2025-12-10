@@ -201,101 +201,90 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
         return Center(
           child: Material(
             color: Colors.transparent,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 900.w,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 40.w,
-                    vertical: 60.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(40.r),
-                    image: DecorationImage(
-                      image: AssetImage(
-                        '${defaultImagePath}delete_dialog_bg.png',
-                      ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+            child: Container(
+              width: 800.w,
+              padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 60.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(80.r),
+                image: DecorationImage(
+                  image: AssetImage('${defaultImagePath}delete_dialog_bg.png'),
+                  fit: BoxFit.fill,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
                     children: [
-                      Image.asset(
-                        '${defaultImagePath}delete_logo.png',
-                        height: 200.h,
-                      ),
-                      40.verticalSpace,
-
-                      Text(
-                        getTranslated(context)!.deleteVideo,
-                        style: TextStyle(
-                          fontSize: 60.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-
-                      20.verticalSpace,
-
-                      Text(
-                        getTranslated(
-                          context,
-                        )!.areYouSureYouWantToDeleteThisVideo,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 50.sp),
-                      ),
-
-                      60.verticalSpace,
-
+                      Spacer(),
                       NewDeepPressUnpress(
-                        onTap: () async {
+                        onTap: () {
                           Navigator.pop(context);
-                          _deleteVideo();
                         },
-                        child: Container(
-                          width: 600.w,
-                          padding: EdgeInsets.symmetric(vertical: 35.h),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(60.r),
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [Color(0xFFDD22F5), Color(0xFFFF705D)],
-                              stops: [0.20, 0.84],
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              getTranslated(context)!.delete,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 50.sp,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
+                        child: Image.asset(
+                          '${defaultImagePath}close.png',
+                          width: 100.w,
                         ),
                       ),
-                      40.verticalSpace,
                     ],
                   ),
-                ),
-                50.verticalSpace,
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: EdgeInsets.all(20.r),
-                    decoration: BoxDecoration(shape: BoxShape.circle),
-                    child: Image.asset(
-                      '${defaultImagePath}delete_cancel.png',
-                      height: 120.h,
+                  Image.asset(
+                    '${defaultImagePath}delete_icon_dialog.png',
+                    height: 300.h,
+                  ),
+                  50.verticalSpace,
+                  Text(
+                    getTranslated(context)!.areYouSureYouWantToDeleteThisVideo,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 50.sp,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-              ],
+
+                  60.verticalSpace,
+
+                  NewDeepPressUnpress(
+                    onTap: () async {
+                      Navigator.pop(context);
+                      _deleteVideo();
+                    },
+                    child: Container(
+                      width: 600.w,
+                      padding: EdgeInsets.symmetric(vertical: 35.h),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(150),
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [Color(0xFFFF7271), Color(0xFFEF4B4A)],
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          getTranslated(context)!.delete,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 50.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  30.verticalSpace,
+                  NewDeepPressUnpress(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      getTranslated(context)!.cancel,
+                      style: TextStyle(color: Color(0xff626262)),
+                    ),
+                  ),
+                  40.verticalSpace,
+                ],
+              ),
             ),
           ),
         );
@@ -382,7 +371,7 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Color(0xfff3f3f3),
         body: Stack(
           children: [
             SafeArea(
@@ -400,7 +389,7 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
                           onTap: () {
                             AdsLoadUtil.onShowAds(context, () {
                               if (widget.from == 'generate') {
-                                Navigator.pop(context);
+                                // Navigator.pop(context);
                                 Navigator.pop(context);
                               } else {
                                 Navigator.pop(context);
@@ -409,16 +398,24 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
                           },
                           child: Image.asset(
                             '${defaultImagePath}back.png',
-                            height: 110.h,
+                            height: 100.h,
                           ),
                         ),
-                        Spacer(),
-                        SizedBox(width: 40.w),
+                        30.horizontalSpace,
+                        Expanded(
+                          child: Text(
+                            getTranslated(context)!.preview,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 75.sp, letterSpacing: 0.4),
+                          ),
+                        ),
                         NewDeepPressUnpress(
                           onTap: () => showDeleteDialog(context),
                           child: Image.asset(
                             '${defaultImagePath}delete.png',
-                            height: 100.w,
+                            height: 90.w,
                           ),
                         ),
                       ],
@@ -427,22 +424,47 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
 
                   50.verticalSpace,
                   Expanded(child: Center(child: _buildBody())),
-                  50.verticalSpace,
 
-                  ElevatedButton(
-                    onPressed: () {
+                  NewDeepPressUnpress(
+                    onTap: () {
                       if (_isSavingToGallery) {
                         return;
                       } else {
                         _saveToGallery();
                       }
                     },
-                    child: Text(getTranslated(context)!.downloadVideo),
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 70.h),
+                      height: 180.h,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(150),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            '${defaultImagePath}download.png',
+                            color: Colors.white,
+                            width: 70.w,
+                          ),
+                          30.horizontalSpace,
+                          Text(
+                            getTranslated(context)!.downloadVideo,
+                            style: TextStyle(
+                              fontSize: 60.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+
+                  50.verticalSpace,
                 ],
               ),
             ),
-
             if (_isSavingToGallery)
               Container(
                 color: Colors.black.withValues(alpha: 0.7),
@@ -540,51 +562,47 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(120.r),
-        color: Colors.black,
+        color: const Color(0xfff3f3f3),
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(120.r),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
+      child: AspectRatio(
+        aspectRatio: _controller.value.aspectRatio,
+        child: Stack(
+          children: [
+            // --- VIDEO ---
+            ClipRRect(
+              borderRadius: BorderRadius.circular(120.r),
               child: VideoPlayer(_controller),
             ),
-          ),
 
-          NewDeepPressUnpress(
-            onTap: () {
-              setState(() {
-                _controller.value.isPlaying
-                    ? _controller.pause()
-                    : _controller.play();
-              });
-            },
-            child: Container(
-              color: Colors.transparent,
-              width: double.infinity,
-              height: double.infinity,
-            ),
-          ),
-
-          if (!_controller.value.isPlaying && !_hasError)
-            Container(
-              padding: EdgeInsets.all(20.w),
-              child: Image.asset(
-                '${defaultImagePath}video_pause.png',
-                width: 200.w,
+            // --- TAP TO PAUSE ---
+            Positioned.fill(
+              child: NewDeepPressUnpress(
+                onTap: () {
+                  setState(() {
+                    _controller.value.isPlaying
+                        ? _controller.pause()
+                        : _controller.play();
+                  });
+                },
+                child: Container(color: Colors.transparent),
               ),
             ),
 
-          // Bottom controls - only show when paused
-          if (!_controller.value.isPlaying && !_hasError)
-            Positioned(
-              bottom: 80.h,
-              left: 25.w,
-              right: 25.w,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            // --- PLAY OVERLAY ---
+            if (!_controller.value.isPlaying && !_hasError)
+              Center(
+                child: Image.asset(
+                  '${defaultImagePath}video_pause.png',
+                  width: 200.w,
+                ),
+              ),
+
+            // --- BOTTOM CONTROLS (fixed to video bottom) ---
+            if (!_controller.value.isPlaying && !_hasError)
+              Positioned(
+                left: 25.w,
+                right: 25.w,
+                bottom: 25.h,  // 👈 Adjust here
                 child: Row(
                   children: [
                     NewDeepPressUnpress(
@@ -603,6 +621,7 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
                       ),
                     ),
                     SizedBox(width: 12.w),
+
                     Text(
                       _formatDuration(_controller.value.position),
                       style: TextStyle(
@@ -623,7 +642,6 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
                           bufferedColor: Colors.white30,
                           backgroundColor: Colors.white24,
                         ),
-                        padding: EdgeInsets.zero,
                       ),
                     ),
 
@@ -640,10 +658,11 @@ class _VideoResultScreenState extends ConsumerState<VideoResultScreen> {
                   ],
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
+
   }
 
   String _formatDuration(Duration duration) {

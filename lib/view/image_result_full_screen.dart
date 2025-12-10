@@ -276,7 +276,7 @@ class _ImageResultFullScreenState extends ConsumerState<ImageResultFullScreen> {
                 },
                 child: Image.asset(
                   '${defaultImagePath}delete.png',
-                  width: 130.w,
+                  width: 90.w,
                 ),
               ),
             ],

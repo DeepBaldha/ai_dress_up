@@ -108,7 +108,7 @@ class ClothChangeNotifier extends StateNotifier<ClothChangeState> {
 
     bool shouldRefund = false;
 
-    FirebaseAnalyticsService.logEvent(eventName: 'CLOTH_CHANGE_USE');
+    FirebaseAnalyticsService.logEvent(eventName: 'GENERATING_IMAGE_CLOTH_CHANGE');
 
     try {
       final imageUrl = await _callClothChangeApi(

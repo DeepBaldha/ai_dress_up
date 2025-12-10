@@ -1,7 +1,6 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:ai_dress_up/utils/consts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lottie/lottie.dart';
 
 /// A blocking loading dialog that prevents any user interaction.
 /// Use [showBlockingLoader(context)] to display and [hideBlockingLoader(context)] to dismiss.
@@ -19,7 +18,7 @@ class LoadingDialog {
     showDialog(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black,
+      barrierColor: Color(0xfff3f3f3),
       builder: (BuildContext context) {
         return PopScope(
           canPop: false,
@@ -30,12 +29,28 @@ class LoadingDialog {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Lottie.asset('${defaultImagePath}loader.json', width: 300.w),
-                  50.horizontalSpace,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 100.w),
+                    child: Image.asset(
+                      width: double.infinity,
+                      '${defaultImagePath}loading_logo_image.png',
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                  150.verticalSpace,
+                  SizedBox(
+                    width: 380.w,
+                    height: 380.w,
+                    child: FittedBox(
+                        fit: BoxFit.contain,
+                      child: Image.asset('${defaultImagePath}round_gif.gif'),
+                    ),
+                  ),
+                  100.verticalSpace,
                   Text(
                     message,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 60.sp,
                       fontWeight: FontWeight.w800,
                     ),
@@ -43,10 +58,13 @@ class LoadingDialog {
                   ),
                   30.verticalSpace,
                   if (secondMessage != null)
-                    Text(
-                      secondMessage,
-                      style: TextStyle(color: Colors.white, fontSize: 50.sp),
-                      textAlign: TextAlign.center,
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 80.w),
+                      child: Text(
+                        secondMessage,
+                        style: TextStyle(color: Colors.black, fontSize: 60.sp),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                 ],
               ),

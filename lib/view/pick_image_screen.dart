@@ -135,7 +135,7 @@ class ImagePickerHelper {
                             color: Color(0xff7B7B7B),
                           ),
                         ),
-                        Image.asset('${defaultImagePath}ok_image.png'),
+                        Image.asset('${defaultImagePath}ok_image.png',width: double.infinity,fit: BoxFit.fill,),
                         80.verticalSpace,
                         Text(
                           getTranslated(context)!.whatWillNotWork,
@@ -158,7 +158,7 @@ class ImagePickerHelper {
                           ),
                         ),
                         20.verticalSpace,
-                        Image.asset('${defaultImagePath}not_ok_image.png'),
+                        Image.asset('${defaultImagePath}not_ok_image.png',width: double.infinity),
                         80.verticalSpace,
                       ],
                     ),
@@ -456,23 +456,26 @@ class ImagePickerHelper {
       barrierDismissible: false,
       builder: (context) => PopScope(
         canPop: false,
-        child: Center(
-          child: Container(
-            padding: EdgeInsets.all(40.w),
-            decoration: BoxDecoration(
-              color: const Color(0xff1E1E1E),
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Lottie.asset('${defaultImagePath}loader.json', height: 200.h),
-                20.verticalSpace,
-                const Text(
-                  'Processing image...',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ],
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              padding: EdgeInsets.all(40.w),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Lottie.asset('${defaultImagePath}loader.json', height: 200.h),
+                  20.verticalSpace,
+                  const Text(
+                    'Processing image...',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

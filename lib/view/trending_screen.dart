@@ -1,12 +1,14 @@
-import 'package:ai_dress_up/view/premium_screen.dart';
-import 'package:ai_dress_up/view/setting_screen.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../ads/ads_variable.dart';
+import '../utils/custom_widgets/background_task_widget.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../utils/custom_widgets/deep_press_unpress.dart';
 import 'package:ai_dress_up/view/pick_image_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../utils/global_variables.dart';
+import '../view_model/background_video_provider.dart';
+import 'package:ai_dress_up/view/setting_screen.dart';
+import 'package:ai_dress_up/view/premium_screen.dart';
 import '../view_model/video_generator_provider.dart';
 import '../utils/firebase_analytics_service.dart';
 import 'package:video_player/video_player.dart';
@@ -15,15 +17,15 @@ import '../view_model/video_data_provider.dart';
 import '../view_model/video_like_provider.dart';
 import '../utils/shared_preference_utils.dart';
 import '../view_model/credit_provider.dart';
+import '../utils/global_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:lottie/lottie.dart';
+import 'credit_premium_screen.dart';
 import '../model/video_model.dart';
-import '../ads/ads_load_util.dart';
 import '../utils/consts.dart';
 import '../utils/utils.dart';
 import 'dart:io';
-
-import 'credit_premium_screen.dart';
 
 class TrendingVideoScreen extends ConsumerStatefulWidget {
   const TrendingVideoScreen({super.key});
@@ -56,14 +58,13 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
     WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      showLog('Deep Baldha');
       _loadTrendingVideos();
       _checkScrollHint();
     });
   }
 
   void _loadTrendingVideos() {
-    final state = ref.read(videoDataProvider(VideoDataType.trending));
+    final state = ref.read(videoDataProvider(VideoDataType.homeNormal));
 
     state.whenData((videos) {
       if (_allVideos.isEmpty && videos.isNotEmpty) {
@@ -113,9 +114,10 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
     await _controller?.dispose();
     _controller = null;
 
+    final baseURL = getBaseURL();
     try {
       final videoUrl =
-          '${GlobalVariables.videoListTrendingBaseURL}${video.video}';
+          '$baseURL${video.video}';
 
       final file = await DefaultCacheManager().getSingleFile(videoUrl);
       _controller = VideoPlayerController.file(file);
@@ -163,9 +165,19 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
   }
 
   Future<void> _pickImageCheck() async {
+    final bgTask = ref.read(backgroundTaskProvider);
+    if (bgTask.hasActiveTask) {
+      showToast('A video is already being generated in background. Please wait until it completes.');
+      showLog('⛔ Cannot start new generation - background task is active');
+      return;
+    }
+
     final video = _allVideos[_currentIndex];
+
     final freeVideoNotifier = ref.read(freeVideoUsageProvider.notifier);
     final canUseFree = freeVideoNotifier.canUseFree(video);
+
+    showLog('Can use free $canUseFree');
 
     if (canUseFree) {
       _pickImage();
@@ -173,9 +185,23 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
     }
 
     if (!ref.read(creditProvider.notifier).canAfford(video.creditCharge)) {
+      showLog(
+        'video credit : ${video.creditCharge} and your credit ${ref.read(creditProvider).toString()}',
+      );
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreditPremiumScreen(
+            onDone: () async {
+              await _pickImage();
+            },
+            from: 'generate_video',
+          ),
+        ),
+      );
       return;
     }
-
     await _pickImage();
   }
 
@@ -246,15 +272,49 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
     super.dispose();
   }
 
+  String getBaseURL(){
+    switch (AdsVariable.userFrom.toLowerCase()) {
+      case 'facebook':
+        FirebaseAnalyticsService.logEvent(eventName: 'FACEBOOK_TRENDING_SCREEN');
+        return GlobalVariables.videoFacebookBaseURL;
+      case 'google':
+        FirebaseAnalyticsService.logEvent(eventName: 'GOOGLE_TRENDING_SCREEN');
+        return GlobalVariables.videoGoogleAdsBaseURL;
+      case 'unity':
+        FirebaseAnalyticsService.logEvent(eventName: 'UNITY_TRENDING_SCREEN');
+        return GlobalVariables.videoHomeBaseURL;
+      default:
+        FirebaseAnalyticsService.logEvent(eventName: 'PLAY_STORE_TRENDING_SCREEN');
+        return GlobalVariables.videoHomeBaseURL;
+    }
+  }
+
+  VideoDataType getHomeVideoType() {
+    showLog('Ads variable value is : ${AdsVariable.userFrom}');
+    switch (AdsVariable.userFrom.toLowerCase()) {
+      case 'facebook':
+        return VideoDataType.homeFacebook;
+      case 'google':
+        return VideoDataType.homeGoogle;
+      case 'unity':
+        return VideoDataType.homeNormal;
+      default:
+        return VideoDataType.homeNormal;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final trendingState = ref.watch(videoDataProvider(VideoDataType.trending));
+    final homeVideoType = getHomeVideoType();
+    final trendingState = ref.watch(videoDataProvider(homeVideoType));
 
-    trendingState.whenData((videos) {
-      if (_allVideos.isEmpty && videos.isNotEmpty) {
+    trendingState.whenData((result) {
+      final original = result['original'];
+
+      if (_allVideos.isEmpty && original.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           setState(() {
-            _allVideos = videos;
+            _allVideos = original;
           });
 
           _initializeCachedVideo(_allVideos[_currentIndex]);
@@ -262,10 +322,11 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
       }
     });
 
+
     if (_allVideos.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.white,
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(child: Lottie.asset('${defaultImagePath}loader.json',height: 300.h)),
       );
     }
 
@@ -301,11 +362,12 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
             actualIndex == (_currentIndex % _allVideos.length);
 
         if (!isCurrentPage) {
+          String baseURL = getBaseURL();
           // Show the thumbnail for non-current pages
           return CachedNetworkImage(
             imageUrl: _allVideos[actualIndex].inputImage.startsWith('http')
                 ? _allVideos[actualIndex].inputImage
-                : '${GlobalVariables.videoListTrendingBaseURL}${_allVideos[actualIndex].inputImage}',
+                : '$baseURL${_allVideos[actualIndex].inputImage}',
             fit: BoxFit.cover,
           );
         }
@@ -385,10 +447,11 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
   }
 
   Widget _loadingView(int index) {
+    final baseURL = getBaseURL();
     return CachedNetworkImage(
       imageUrl: _allVideos[index].inputImage.startsWith('http')
           ? _allVideos[index].inputImage
-          : '${GlobalVariables.videoListTrendingBaseURL}${_allVideos[index].inputImage}',
+          : '$baseURL${_allVideos[index].inputImage}',
       fit: BoxFit.cover,
       placeholder: (context, url) => Shimmer.fromColors(
         baseColor: Colors.grey[300]!,
@@ -451,112 +514,122 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
         child: Container(
           color: Colors.transparent,
           padding: EdgeInsets.only(left: 50.w, top: 20.h, bottom: 20.h),
-          child: Row(
+          child: Column(
             children: [
-              Image(
-                image: AssetImage('${defaultImagePath}video_heading_white.png'),
-                width: 400.w,
-              ),
-              Expanded(child: Container()),
               Row(
                 children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 30.w,
-                      vertical: 15.h,
+                  Image(
+                    image: AssetImage(
+                      '${defaultImagePath}video_heading_white.png',
                     ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: Row(
-                      children: [
-                        NewDeepPressUnpress(
-                          onTap: () {
-                            navigateTo(
-                              context,
-                              CreditPremiumScreen(from: 'home', onDone: () {}),
-                            );
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 30.w,
-                              vertical: 15.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(100),
-                              border: Border.all(
-                                color: Color(0xffDDDDDD),
-                                width: 5.w,
+                    width: 400.w,
+                  ),
+                  Expanded(child: Container()),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 30.w,
+                          vertical: 15.h,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Row(
+                          children: [
+                            NewDeepPressUnpress(
+                              onTap: () {
+                                navigateTo(
+                                  context,
+                                  CreditPremiumScreen(
+                                    from: 'home',
+                                    onDone: () {},
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 30.w,
+                                  vertical: 15.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(100),
+                                  border: Border.all(
+                                    color: Color(0xffDDDDDD),
+                                    width: 5.w,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Image.asset(
+                                      '${defaultImagePath}coin.png',
+                                      width: 60.w,
+                                    ),
+                                    20.horizontalSpace,
+                                    Consumer(
+                                      builder: (context, ref, _) {
+                                        return Text(
+                                          ref.watch(creditProvider).toString(),
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 55.sp,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Image.asset(
-                                  '${defaultImagePath}coin.png',
-                                  width: 60.w,
+                            30.horizontalSpace,
+                            NewDeepPressUnpress(
+                              onTap: () {
+                                navigateTo(
+                                  context,
+                                  PremiumScreen(from: 'home', onDone: () {}),
+                                );
+                              },
+                              child: Container(
+                                height: 115.h,
+                                width: 115.h,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                      '${defaultImagePath}home_pro_button.png',
+                                    ),
+                                    fit: BoxFit.fill,
+                                  ),
                                 ),
-                                20.horizontalSpace,
-                                Consumer(
-                                  builder: (context, ref, _) {
-                                    return Text(
-                                      ref.watch(creditProvider).toString(),
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 55.sp,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        30.horizontalSpace,
-                        NewDeepPressUnpress(
-                          onTap: () {
-                            navigateTo(
-                              context,
-                              PremiumScreen(from: 'home', onDone: () {}),
-                            );
-                          },
-                          child: Container(
-                            height: 115.h,
-                            width: 115.h,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                  '${defaultImagePath}home_pro_button.png',
-                                ),
-                                fit: BoxFit.fill,
                               ),
                             ),
-                          ),
-                        ),
-                        30.horizontalSpace,
-                        NewDeepPressUnpress(
-                          onTap: () {
-                            navigateTo(context, SettingScreen());
-                          },
-                          child: Container(
-                            height: 115.h,
-                            width: 115.h,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                  '${defaultImagePath}setting_button.png',
+                            30.horizontalSpace,
+                            NewDeepPressUnpress(
+                              onTap: () {
+                                navigateTo(context, SettingScreen());
+                              },
+                              child: Container(
+                                height: 115.h,
+                                width: 115.h,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                      '${defaultImagePath}setting_button.png',
+                                    ),
+                                    fit: BoxFit.fill,
+                                  ),
                                 ),
-                                fit: BoxFit.fill,
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              const BackgroundTaskWidget(),
             ],
           ),
         ),
@@ -625,6 +698,7 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
   }
 
   Widget _buildPickedImageCard() {
+    final baseURL = getBaseURL();
     return Container(
       height: 380.h,
       width: 270.w,
@@ -647,7 +721,7 @@ class _TrendingVideoScreenState extends ConsumerState<TrendingVideoScreen>
                             'http',
                           )
                           ? _allVideos[_currentIndex].inputImage
-                          : '${GlobalVariables.videoListTrendingBaseURL}${_allVideos[_currentIndex].inputImage}',
+                          : '$baseURL${_allVideos[_currentIndex].inputImage}',
                       fit: BoxFit.cover,
                     ),
 

@@ -140,7 +140,7 @@ class _SettingScreenState extends State<SettingScreen> {
               children: [
                 50.verticalSpace,
 
-                NewDeepPressUnpress(
+                /*NewDeepPressUnpress(
                   onTap: () async {
                     // final result = await Navigator.push(
                     //   context,
@@ -185,7 +185,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       ],
                     ),
                   ),
-                ),
+                ),*/
                 50.verticalSpace,
                 SettingOptionTile(
                   onTap: () {

@@ -1,3 +1,5 @@
+import 'package:ai_dress_up/utils/custom_widgets/deep_press_unpress.dart';
+import 'package:ai_dress_up/view/bottom_navigation_screen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -8,12 +10,14 @@ class LoadingProgressWidget extends StatefulWidget {
   final int percentage;
   final String? message1;
   final String? message2;
+  final bool showHideButton; // 🔥 New parameter
 
   const LoadingProgressWidget({
     super.key,
     required this.percentage,
     this.message1,
     this.message2,
+    this.showHideButton = true, // 🔥 Default true
   });
 
   @override
@@ -63,7 +67,7 @@ class _LoadingProgressWidgetState extends State<LoadingProgressWidget>
 
     final String subText =
         widget.message2 ??
-        getTranslated(context)!.yourResultIsOnTheWayJustAFewMinutesToGo;
+            getTranslated(context)!.yourResultIsOnTheWayJustAFewMinutesToGo;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 80.w),
@@ -139,27 +143,37 @@ class _LoadingProgressWidgetState extends State<LoadingProgressWidget>
             ),
           ),
           250.verticalSpace,
-          Container(
-            height: 170.h,
-            padding: EdgeInsets.symmetric(horizontal: 50.w),
-            decoration: BoxDecoration(
-              color: Color(0xffD8D8D8),
-              borderRadius: BorderRadius.circular(150),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: Text(
-                    getTranslated(context)!.hide,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Color(0xff7B7B7B), fontSize: 50.sp),
-                  ),
+
+          if(widget.showHideButton)
+            NewDeepPressUnpress(
+              onTap: () {
+                showLog('is show hide button ${widget.showHideButton}');
+                LoadingProgressDialog.hide(context, fromHideButton: true);
+                navigateToAndRemoveUntil(context, BottomNavigationScreen());
+                showToast(getTranslated(context)!.youCanSeeProcessInHomeScreen);
+              },
+              child: Container(
+                height: 170.h,
+                padding: EdgeInsets.symmetric(horizontal: 50.w),
+                decoration: BoxDecoration(
+                  color: Color(0xffD8D8D8),
+                  borderRadius: BorderRadius.circular(150),
                 ),
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        getTranslated(context)!.hide,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Color(0xff7B7B7B), fontSize: 50.sp),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -167,15 +181,17 @@ class _LoadingProgressWidgetState extends State<LoadingProgressWidget>
 }
 
 class LoadingProgressDialog {
+  static VoidCallback? onHideCallback;
   static bool _isDialogVisible = false;
   static GlobalKey<_LoadingProgressDialogContentState>? _contentKey;
 
   static void show(
-    BuildContext context, {
-    required int percentage,
-    String? message1,
-    String? message2,
-  }) {
+      BuildContext context, {
+        required int percentage,
+        String? message1,
+        String? message2,
+        bool showHideButton = false,
+      }) {
     if (_isDialogVisible) return;
     _isDialogVisible = true;
     _contentKey = GlobalKey<_LoadingProgressDialogContentState>();
@@ -192,18 +208,13 @@ class LoadingProgressDialog {
             backgroundColor: Color(0xfff3f3f3),
             body: Stack(
               children: [
-                /*Positioned.fill(
-                  child: Image.asset(
-                    '${defaultImagePath}loader_full_bg.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),*/
                 Center(
                   child: _LoadingProgressDialogContent(
                     key: _contentKey,
                     initialPercentage: percentage,
                     initialMessage1: message1,
                     initialMessage2: message2,
+                    initialShowHideButton: showHideButton,
                   ),
                 ),
               ],
@@ -215,11 +226,12 @@ class LoadingProgressDialog {
   }
 
   static void update(
-    BuildContext context,
-    int percentage, {
-    String? message1,
-    String? message2,
-  }) {
+      BuildContext context,
+      int percentage, {
+        String? message1,
+        String? message2,
+        bool? showHideButton, // 🔥 Can update hide button visibility
+      }) {
     if (!_isDialogVisible || _contentKey?.currentState == null) {
       if (!_isDialogVisible) {
         show(
@@ -227,6 +239,7 @@ class LoadingProgressDialog {
           percentage: percentage,
           message1: message1,
           message2: message2,
+          showHideButton: showHideButton ?? false,
         );
       }
       return;
@@ -236,14 +249,18 @@ class LoadingProgressDialog {
       percentage: percentage,
       message1: message1,
       message2: message2,
+      showHideButton: showHideButton,
     );
   }
 
-  static void hide(BuildContext context) {
+  static void hide(BuildContext context, {bool fromHideButton = false}) {
     if (_isDialogVisible) {
       _isDialogVisible = false;
-      _contentKey = null;
       Navigator.of(context, rootNavigator: true).pop();
+
+      if (fromHideButton && onHideCallback != null) {
+        onHideCallback!.call(); // 🔥 Tell system to move generation to background
+      }
     }
   }
 }
@@ -253,12 +270,14 @@ class _LoadingProgressDialogContent extends StatefulWidget {
   final int initialPercentage;
   final String? initialMessage1;
   final String? initialMessage2;
+  final bool initialShowHideButton;
 
   const _LoadingProgressDialogContent({
     super.key,
     required this.initialPercentage,
     this.initialMessage1,
     this.initialMessage2,
+    this.initialShowHideButton = false,
   });
 
   @override
@@ -271,6 +290,7 @@ class _LoadingProgressDialogContentState
   late int _percentage;
   late String? _message1;
   late String? _message2;
+  late bool _showHideButton;
 
   @override
   void initState() {
@@ -278,17 +298,22 @@ class _LoadingProgressDialogContentState
     _percentage = widget.initialPercentage;
     _message1 = widget.initialMessage1;
     _message2 = widget.initialMessage2;
+    _showHideButton = widget.initialShowHideButton;
   }
 
   void updateContent({
     required int percentage,
     String? message1,
     String? message2,
+    bool? showHideButton,
   }) {
     setState(() {
       _percentage = percentage;
       _message1 = message1;
       _message2 = message2;
+      if (showHideButton != null) {
+        _showHideButton = showHideButton;
+      }
     });
   }
 
@@ -298,6 +323,7 @@ class _LoadingProgressDialogContentState
       percentage: _percentage,
       message1: _message1,
       message2: _message2,
+      showHideButton: _showHideButton,
     );
   }
 }

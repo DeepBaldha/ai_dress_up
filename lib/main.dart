@@ -1,3 +1,4 @@
+import 'package:ai_dress_up/utils/consts.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:ai_dress_up/utils/shared_preference_utils.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,7 +24,6 @@ void main() async {
       statusBarBrightness: Brightness.dark,
     ),
   );
-
 
   await SharedPreferenceUtils.init();
   await Firebase.initializeApp().whenComplete(() {});
@@ -67,6 +67,7 @@ class _MyAppState extends State<MyApp> {
     return ScreenUtilInit(
       designSize: const Size(1290, 2796),
       child: GetMaterialApp(
+        navigatorKey: navigatorKey,
         locale: _locale,
         themeMode: ThemeMode.light,
         theme: ThemeData(fontFamily: 'Gabarito'),

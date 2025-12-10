@@ -1,20 +1,22 @@
 import 'package:ai_dress_up/view/video_history_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../ads/ads_load_util.dart';
 import 'package:flutter/material.dart';
 import '../utils/consts.dart';
 import '../utils/custom_widgets/deep_press_unpress.dart';
 import '../utils/utils.dart';
+import '../view_model/background_video_provider.dart';
 import 'image_result_history_screen.dart';
 
-class CreationScreen extends StatefulWidget {
+class CreationScreen extends ConsumerStatefulWidget {
   const CreationScreen({super.key});
 
   @override
-  State<CreationScreen> createState() => _CreationScreenState();
+  ConsumerState<CreationScreen> createState() => _CreationScreenState();
 }
 
-class _CreationScreenState extends State<CreationScreen> {
+class _CreationScreenState extends ConsumerState<CreationScreen> {
   int _selectedToggle = 0;
   final PageController _pageController = PageController();
 
@@ -28,6 +30,16 @@ class _CreationScreenState extends State<CreationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgTask = ref.watch(backgroundTaskProvider);
+
+    if (bgTask.isCompleted || bgTask.hasFailed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(backgroundTaskProvider.notifier).clearTask();
+        }
+      });
+    }
+
     return PopScope(
       canPop: false,
       child: Scaffold(

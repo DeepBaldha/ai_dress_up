@@ -183,7 +183,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       await initPlatformState(updatedCustomerInfo);
     } on PlatformException catch (e) {
       loadingScreen.hide();
-      //Navigator.pop(context);
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
         showLog('User cancelled');
@@ -263,465 +262,468 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Container(
-            height: getHeight(context),
-            width: getWidth(context),
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('${defaultImagePath}premium_bg.png'),
-                fit: BoxFit.fill,
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Container(
+              height: getHeight(context),
+              width: getWidth(context),
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('${defaultImagePath}premium_bg.png'),
+                  fit: BoxFit.fill,
+                ),
               ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 100.w,
-                  top: 50.h,
-                  child: SafeArea(
-                    child: NewDeepPressUnpress(
-                      onTap: () {
-                        if (widget.from.toLowerCase() == 'intro' ||
-                            widget.from.toLowerCase() == 'splash') {
-                          navigateToReplace(context, BottomNavigationScreen());
-                        } else {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Image.asset(
-                        '${defaultImagePath}close.png',
-                        width: 90.w,
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 100.w,
+                    top: 50.h,
+                    child: SafeArea(
+                      child: NewDeepPressUnpress(
+                        onTap: () {
+                          if (widget.from.toLowerCase() == 'intro' ||
+                              widget.from.toLowerCase() == 'splash') {
+                            navigateToReplace(context, BottomNavigationScreen());
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Image.asset(
+                          '${defaultImagePath}close.png',
+                          width: 90.w,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(
-                    top: false,
-                    child: Column(
-                      children: [
-                        isLoading
-                            ? Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 40.w,
-                                  vertical: 30.h,
-                                ),
-                                child: Lottie.asset(
-                                  '${defaultImagePath}loader.json',
-                                  height: 300.h,
-                                ),
-                              )
-                            : Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 50.w,
-                                  vertical: 25.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Color(
-                                    0xffFFFFFF,
-                                  ).withValues(alpha: 0.9),
-                                  borderRadius: BorderRadius.circular(150),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.25,
-                                      ),
-                                      blurRadius: 20,
-                                      spreadRadius: 2,
-                                      offset: Offset(0, 0),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset(
-                                      '${defaultImagePath}coin_show.png',
-                                      height: 80.h,
-                                    ),
-                                    30.horizontalSpace,
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: 'Get ',
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 50.sp,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: isWeekly
-                                                ? '${GlobalVariables.weeklyPlanBonusCredit}'
-                                                : '${GlobalVariables.yearlyPlanBonusCredit}',
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 50.sp,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: ' Credits',
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 50.sp,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                        50.verticalSpace,
-                        isLoading
-                            ? Container(
-                                height: 500.h,
-                                child: Center(
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: SafeArea(
+                      top: false,
+                      child: Column(
+                        children: [
+                          isLoading
+                              ? Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 40.w,
+                                    vertical: 30.h,
+                                  ),
                                   child: Lottie.asset(
                                     '${defaultImagePath}loader.json',
+                                    height: 300.h,
+                                  ),
+                                )
+                              : Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 50.w,
+                                    vertical: 25.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Color(
+                                      0xffFFFFFF,
+                                    ).withValues(alpha: 0.9),
+                                    borderRadius: BorderRadius.circular(150),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.25,
+                                        ),
+                                        blurRadius: 20,
+                                        spreadRadius: 2,
+                                        offset: Offset(0, 0),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        '${defaultImagePath}coin_show.png',
+                                        height: 80.h,
+                                      ),
+                                      30.horizontalSpace,
+                                      RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: 'Get ',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 50.sp,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: isWeekly
+                                                  ? '${GlobalVariables.weeklyPlanBonusCredit}'
+                                                  : '${GlobalVariables.yearlyPlanBonusCredit}',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 50.sp,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: ' Credits',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 50.sp,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              )
-                            : Column(
-                                children: [
-                                  NewDeepPressUnpress(
-                                    onTap: () {
-                                      setState(() {
-                                        isWeekly = false;
-                                        selectedPackage = yearlyPackage;
-                                      });
-                                    },
-                                    child: Container(
-                                      height: 230.h,
-                                      margin: EdgeInsets.symmetric(
-                                        horizontal: 40.w,
-                                      ),
-                                      padding: EdgeInsets.only(
-                                        left: 150.w,
-                                        right: 60.w,
-                                        top: 20.h,
-                                        bottom: 20.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(
-                                          60.r,
+
+                          50.verticalSpace,
+                          isLoading
+                              ? Container(
+                                  height: 500.h,
+                                  child: Center(
+                                    child: Lottie.asset(
+                                      '${defaultImagePath}loader.json',
+                                    ),
+                                  ),
+                                )
+                              : Column(
+                                  children: [
+                                    NewDeepPressUnpress(
+                                      onTap: () {
+                                        setState(() {
+                                          isWeekly = false;
+                                          selectedPackage = yearlyPackage;
+                                        });
+                                      },
+                                      child: Container(
+                                        height: 230.h,
+                                        margin: EdgeInsets.symmetric(
+                                          horizontal: 40.w,
                                         ),
-                                        image: DecorationImage(
-                                          image: AssetImage(
-                                            selectedPackage
-                                                        ?.storeProduct
-                                                        .identifier ==
-                                                    yearlyIdentifier
-                                                ? '${defaultImagePath}premium_plan_selected.png'
-                                                : '${defaultImagePath}premium_plan_unselect.png',
+                                        padding: EdgeInsets.only(
+                                          left: 150.w,
+                                          right: 60.w,
+                                          top: 20.h,
+                                          bottom: 20.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            60.r,
                                           ),
-                                          fit: BoxFit.fill,
+                                          image: DecorationImage(
+                                            image: AssetImage(
+                                              selectedPackage
+                                                          ?.storeProduct
+                                                          .identifier ==
+                                                      yearlyIdentifier
+                                                  ? '${defaultImagePath}premium_plan_selected.png'
+                                                  : '${defaultImagePath}premium_plan_unselect.png',
+                                            ),
+                                            fit: BoxFit.fill,
+                                          ),
                                         ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      '${getTranslated(context)!.yearly} ${getTranslated(context)!.plan}',
-                                                      style: TextStyle(
-                                                        fontSize: 60.sp,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        color: Colors.black,
-                                                      ),
-                                                    ),
-                                                    20.horizontalSpace,
-                                                    Container(
-                                                      padding:
-                                                          EdgeInsets.symmetric(
-                                                            horizontal: 25.w,
-                                                            vertical: 5.h,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.black,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              100,
-                                                            ),
-                                                      ),
-                                                      child: Text(
-                                                        '${discount.toString()}% OFF',
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.center,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        '${getTranslated(context)!.yearly} ${getTranslated(context)!.plan}',
                                                         style: TextStyle(
-                                                          color: Colors.white,
+                                                          fontSize: 60.sp,
                                                           fontWeight:
-                                                              FontWeight.w700,
-                                                          fontSize: 40.sp,
+                                                              FontWeight.w500,
+                                                          color: Colors.black,
                                                         ),
                                                       ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Text(
-                                                  '${getTranslated(context)!.pay} ${yearlyPackage?.storeProduct.priceString ?? '\$1000'} ${getTranslated(context)!.forYear}',
-                                                  style: TextStyle(
-                                                    fontSize: 42.sp,
+                                                      20.horizontalSpace,
+                                                      Container(
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                              horizontal: 25.w,
+                                                              vertical: 5.h,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.black,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                100,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          '${discount.toString()}% OFF',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            fontSize: 40.sp,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              10.verticalSpace,
-                                              Text(
-                                                yearlyPackage
-                                                        ?.storeProduct
-                                                        .priceString ??
-                                                    "\$1000",
-                                                style: TextStyle(
-                                                  fontSize: 55.sp,
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
+                                                  Text(
+                                                    '${getTranslated(context)!.pay} ${yearlyPackage?.storeProduct.priceString ?? '\$1000'} ${getTranslated(context)!.forYear}',
+                                                    style: TextStyle(
+                                                      fontSize: 42.sp,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  40.verticalSpace,
-                                  NewDeepPressUnpress(
-                                    onTap: () {
-                                      setState(() {
-                                        isWeekly = true;
-                                        selectedPackage = weeklyPackage;
-                                      });
-                                      showLog(
-                                        'msg ${selectedPackage?.storeProduct.identifier}',
-                                      );
-                                    },
-                                    child: Container(
-                                      height: 230.h,
-                                      margin: EdgeInsets.symmetric(
-                                        horizontal: 40.w,
-                                      ),
-                                      padding: EdgeInsets.only(
-                                        left: 150.w,
-                                        right: 60.w,
-                                        top: 20.h,
-                                        bottom: 20.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(
-                                          60.r,
-                                        ),
-                                        image: DecorationImage(
-                                          image: AssetImage(
-                                            selectedPackage
-                                                        ?.storeProduct
-                                                        .identifier ==
-                                                    weeklyIdentifier
-                                                ? '${defaultImagePath}premium_plan_selected.png'
-                                                : '${defaultImagePath}premium_plan_unselect.png',
-                                          ),
-                                          fit: BoxFit.fill,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Column(
+                                            ),
+
+                                            Column(
                                               crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                                  CrossAxisAlignment.end,
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
+                                                10.verticalSpace,
                                                 Text(
-                                                  '${getTranslated(context)!.weekly} ${getTranslated(context)!.plan}',
+                                                  yearlyPackage
+                                                          ?.storeProduct
+                                                          .priceString ??
+                                                      "\$1000",
                                                   style: TextStyle(
-                                                    fontSize: 60.sp,
-                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 55.sp,
                                                     color: Colors.black,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '${getTranslated(context)!.pay} ${weeklyPackage?.storeProduct.priceString ?? '\$1000'} ${getTranslated(context)!.forWeek}',
-                                                  style: TextStyle(
-                                                    fontSize: 42.sp,
+                                                    fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                          ),
-                                          Text(
-                                            weeklyPackage
-                                                    ?.storeProduct
-                                                    .priceString ??
-                                                "",
-                                            style: TextStyle(
-                                              fontSize: 55.sp,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    40.verticalSpace,
+                                    NewDeepPressUnpress(
+                                      onTap: () {
+                                        setState(() {
+                                          isWeekly = true;
+                                          selectedPackage = weeklyPackage;
+                                        });
+                                        showLog(
+                                          'msg ${selectedPackage?.storeProduct.identifier}',
+                                        );
+                                      },
+                                      child: Container(
+                                        height: 230.h,
+                                        margin: EdgeInsets.symmetric(
+                                          horizontal: 40.w,
+                                        ),
+                                        padding: EdgeInsets.only(
+                                          left: 150.w,
+                                          right: 60.w,
+                                          top: 20.h,
+                                          bottom: 20.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            60.r,
+                                          ),
+                                          image: DecorationImage(
+                                            image: AssetImage(
+                                              selectedPackage
+                                                          ?.storeProduct
+                                                          .identifier ==
+                                                      weeklyIdentifier
+                                                  ? '${defaultImagePath}premium_plan_selected.png'
+                                                  : '${defaultImagePath}premium_plan_unselect.png',
+                                            ),
+                                            fit: BoxFit.fill,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    '${getTranslated(context)!.weekly} ${getTranslated(context)!.plan}',
+                                                    style: TextStyle(
+                                                      fontSize: 60.sp,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '${getTranslated(context)!.pay} ${weeklyPackage?.storeProduct.priceString ?? '\$1000'} ${getTranslated(context)!.forWeek}',
+                                                    style: TextStyle(
+                                                      fontSize: 42.sp,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Text(
+                                              weeklyPackage
+                                                      ?.storeProduct
+                                                      .priceString ??
+                                                  "",
+                                              style: TextStyle(
+                                                fontSize: 55.sp,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                          50.verticalSpace,
+                          NewDeepPressUnpress(
+                            onTap: () {
+                              showLog('selected package is : $selectedPackage');
+                              if (!isLoading && selectedPackage != null) {
+                                continueTap();
+                              }
+                            },
+                            child: Container(
+                              height: 180.h,
+                              margin: EdgeInsetsGeometry.symmetric(
+                                horizontal: 50.w,
                               ),
-                        50.verticalSpace,
-                        NewDeepPressUnpress(
-                          onTap: () {
-                            showLog('selected package is : $selectedPackage');
-                            if (!isLoading && selectedPackage != null) {
-                              continueTap();
-                            }
-                          },
-                          child: Container(
-                            height: 180.h,
-                            margin: EdgeInsetsGeometry.symmetric(
-                              horizontal: 50.w,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(150),
-                            ),
-                            child: Center(
-                              child: Text(
-                                getTranslated(context)!.continues,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontFamily: 'Gilroy',
-                                  fontSize: 70.sp,
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(150),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  getTranslated(context)!.continues,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: 'Gilroy',
+                                    fontSize: 70.sp,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        50.verticalSpace,
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 40.w),
-                          child: Text(
-                            getTranslated(context)!.premiumBottomDescription,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xff6C6C6C),
-                              height: 0,
-                              fontWeight: FontWeight.w400,
-                              fontSize: 40.sp,
+                          50.verticalSpace,
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 40.w),
+                            child: Text(
+                              getTranslated(context)!.premiumBottomDescription,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xff6C6C6C),
+                                height: 0,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 40.sp,
+                              ),
                             ),
                           ),
-                        ),
-                        20.verticalSpace,
-                        Container(
-                          width: double.infinity,
-                          height: 50.h,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              /*Flexible(
-                                child: Text(
-                                  getTranslated(context)!.restorePlan,
+                          20.verticalSpace,
+                          Container(
+                            width: double.infinity,
+                            height: 50.h,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                /*Flexible(
+                                  child: Text(
+                                    getTranslated(context)!.restorePlan,
+                                    style: TextStyle(
+                                      color: Color(0xffBEBEBE),
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 42.sp,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '  •  ',
                                   style: TextStyle(
                                     color: Color(0xffBEBEBE),
-                                    fontWeight: FontWeight.w400,
+                                    fontSize: 42.sp,
+                                  ),
+                                ),*/
+                                Flexible(
+                                  child: NewDeepPressUnpress(
+                                    onTap: () {
+                                      navigateTo(
+                                        context,
+                                        WebViewScreen(
+                                          url: privacyPolicy,
+                                          title: getTranslated(
+                                            context,
+                                          )!.privacyPolicy,
+                                          log: 'PRIVACY_POLICY',
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      getTranslated(context)!.privacyPolicy,
+                                      style: TextStyle(
+                                        color: Color(0xff6C6C6C),
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 42.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '  •  ',
+                                  style: TextStyle(
+                                    color: Color(0xff6C6C6C),
                                     fontSize: 42.sp,
                                   ),
                                 ),
-                              ),
-                              Text(
-                                '  •  ',
-                                style: TextStyle(
-                                  color: Color(0xffBEBEBE),
-                                  fontSize: 42.sp,
-                                ),
-                              ),*/
-                              Flexible(
-                                child: NewDeepPressUnpress(
-                                  onTap: () {
-                                    navigateTo(
-                                      context,
-                                      WebViewScreen(
-                                        url: privacyPolicy,
-                                        title: getTranslated(
-                                          context,
-                                        )!.privacyPolicy,
-                                        log: 'PRIVACY_POLICY',
+                                Flexible(
+                                  child: NewDeepPressUnpress(
+                                    onTap: () async {
+                                      await launchUrl(
+                                        Uri.parse(
+                                          "https://play.google.com/store/account/subscriptions",
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      getTranslated(context)!.subscription,
+                                      style: TextStyle(
+                                        color: Color(0xff6C6C6C),
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 42.sp,
                                       ),
-                                    );
-                                  },
-                                  child: Text(
-                                    getTranslated(context)!.privacyPolicy,
-                                    style: TextStyle(
-                                      color: Color(0xff6C6C6C),
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 42.sp,
                                     ),
                                   ),
                                 ),
-                              ),
-                              Text(
-                                '  •  ',
-                                style: TextStyle(
-                                  color: Color(0xff6C6C6C),
-                                  fontSize: 42.sp,
-                                ),
-                              ),
-                              Flexible(
-                                child: NewDeepPressUnpress(
-                                  onTap: () async {
-                                    await launchUrl(
-                                      Uri.parse(
-                                        "https://play.google.com/store/account/subscriptions",
-                                      ),
-                                    );
-                                  },
-                                  child: Text(
-                                    getTranslated(context)!.subscription,
-                                    style: TextStyle(
-                                      color: Color(0xff6C6C6C),
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 42.sp,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        20.verticalSpace,
-                      ],
+                          20.verticalSpace,
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

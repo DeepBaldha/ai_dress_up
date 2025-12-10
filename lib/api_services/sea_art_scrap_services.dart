@@ -375,7 +375,6 @@ class SeaArtScarpNotifier extends Notifier<SeaArtScarpState> {
             final item = items[0];
             final statusDesc = item['status_desc'];
 
-            // 🔥 Extract progress from response
             final int progress = item['process'] ?? 0;
             showLog('📊 Current progress: $progress%');
 
@@ -443,7 +442,6 @@ class SeaArtScarpNotifier extends Notifier<SeaArtScarpState> {
               'videoUrl': null,
             };
           } else {
-            // Failed or cancelled
             return {
               'progress': progress,
               'status': 'failed',

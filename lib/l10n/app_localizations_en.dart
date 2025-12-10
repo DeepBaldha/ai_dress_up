@@ -202,6 +202,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get more => 'More';
 
   @override
+  String get view => 'View';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get videoGeneratedSuccessfully => 'Video Generated Successfully';
+
+  @override
+  String get pendingVideoGeneration => 'Pending video generation';
+
+  @override
+  String get youCanSeeProcessInHomeScreen =>
+      'You can see process in home screen';
+
+  @override
+  String get cancelTask => 'Cancel Task?';
+
+  @override
+  String get cancelTaskMessage =>
+      'Are you sure you want to cancel this video generation?';
+
+  @override
+  String get dismiss => 'Dismiss';
+
+  @override
+  String get videoGeneratedSuccessfullyAndMovedToCreation =>
+      'Video generated successfully and moved to creation';
+
+  @override
+  String get complete => 'Complete';
+
+  @override
+  String get videoReady => 'Video Ready';
+
+  @override
   String get creation => 'Creation';
 
   @override

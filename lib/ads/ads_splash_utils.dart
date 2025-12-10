@@ -153,19 +153,12 @@ class AdsSplashUtils {
           mapValues1['googleAdUtms'] ?? ['cpc'],
         );
 
-        showLog('Google UTMS are : ${GlobalVariables.googleAdUtm} and fb are :${GlobalVariables.fbAdUtm}');
+        showLog(
+          'Google UTMS are : ${GlobalVariables.googleAdUtm} and fb are :${GlobalVariables.fbAdUtm}',
+        );
 
         AdsVariable.testEmail = mapValues1['testerUserId'];
-
         AdsVariable.testPassword = mapValues1['testerPassword'];
-
-        ///image JSON and base URL
-        GlobalVariables.faceSwapJSONURL = mapValues1['imageDataUrl'];
-        showLog('Image URL is : ${GlobalVariables.faceSwapJSONURL}');
-
-        final Uri uri = Uri.parse(GlobalVariables.faceSwapJSONURL);
-        GlobalVariables.faceSwapBaseURL = uri.resolve('.').toString();
-        showLog('Image Base URL is : ${GlobalVariables.faceSwapBaseURL}');
 
         ///video play store JSON and base URL
         GlobalVariables.videoHomeURL = mapValues1['videoDataUrlPlayStore'];
@@ -194,23 +187,56 @@ class AdsSplashUtils {
           'Facebook Base URL is : ${GlobalVariables.videoFacebookBaseURL}',
         );
 
-        ///carousel video JSON and base URL
-        GlobalVariables.videoListTrendingURL =
-            mapValues1['videoDataUrlTrending'];
+        ///Cloth Change Play Store JSON and base URL
+        GlobalVariables.clothChangeImagesPlayStoreURL =
+            mapValues1['clothChangeCategoryImagesPlayStore'];
+
         showLog(
-          'Video Data URL is : ${GlobalVariables.videoListTrendingURL}',
+          'cloth change for play store : ${GlobalVariables.clothChangeImagesPlayStoreURL}',
+        );
+        final Uri uriClothChangePlayStore = Uri.parse(
+          GlobalVariables.clothChangeImagesPlayStoreURL,
+        );
+        GlobalVariables.clothChangeImagesPlayStoreBaseURL =
+            uriClothChangePlayStore.resolve('.').toString();
+        showLog(
+          'cloth change for play store base URL : ${GlobalVariables.clothChangeImagesPlayStoreBaseURL}',
         );
 
-        final Uri uriVideoCarousel = Uri.parse(
-          GlobalVariables.videoListTrendingURL,
+        ///Cloth Change Facebook JSON and base URL
+        GlobalVariables.clothChangeImagesFacebookURL =
+            mapValues1['clothChangeCategoryImagesFacebook'];
+
+        showLog(
+          'cloth change for facebook: ${GlobalVariables.clothChangeImagesFacebookURL}',
         );
-        GlobalVariables.videoListTrendingBaseURL = uriVideoCarousel
+        final Uri uriClothChangeFacebook = Uri.parse(
+          GlobalVariables.clothChangeImagesFacebookURL,
+        );
+        GlobalVariables.clothChangeImagesFacebookBaseURL =
+            uriClothChangeFacebook.resolve('.').toString();
+        showLog(
+          'cloth change for facebook base URL : ${GlobalVariables.clothChangeImagesFacebookBaseURL}',
+        );
+
+        ///Cloth Change Google JSON and base URL
+        GlobalVariables.clothChangeImagesGoogleURL =
+            mapValues1['clothChangeCategoryImagesGoogle'];
+
+        showLog(
+          'Video Data URL for google Ads is : ${GlobalVariables.clothChangeImagesGoogleURL}',
+        );
+        final Uri uriClothChangeGoogle = Uri.parse(
+          GlobalVariables.clothChangeImagesGoogleURL,
+        );
+        GlobalVariables.clothChangeImagesGoogleBaseURL = uriClothChangeGoogle
             .resolve('.')
             .toString();
         showLog(
-          'Carousel Base URL is : ${GlobalVariables.videoListTrendingBaseURL}',
+          'Google Ads Base URL is : ${GlobalVariables.clothChangeImagesGoogleBaseURL}',
         );
 
+        ///Video for google ads
         GlobalVariables.videoListForGoogleAds =
             mapValues1['videoDataUrlGoogleAds'];
         showLog(
@@ -226,9 +252,56 @@ class AdsSplashUtils {
           'Google Ads Base URL is : ${GlobalVariables.videoGoogleAdsBaseURL}',
         );
 
-        // TODO: when submit
+        ///men women image for google
+        GlobalVariables.clothChangeMenWomenGoogleURL =
+            mapValues1['clothChangeMenWomenImageGoogle'];
+        showLog(
+          'Google Data URL for Men women is : ${GlobalVariables.clothChangeMenWomenGoogleURL}',
+        );
+        final Uri uriMenWomenGoogleAds = Uri.parse(
+          GlobalVariables.clothChangeMenWomenGoogleURL,
+        );
+        GlobalVariables.clothChangeMenWomenGoogleBaseURL = uriMenWomenGoogleAds
+            .resolve('.')
+            .toString();
+        showLog(
+          'Google Ads Cloth men women Base URL is : ${GlobalVariables.clothChangeMenWomenGoogleBaseURL}',
+        );
 
-        // await SharedPreferenceUtils.setIsFacebookInstaller(true);
+        ///men women image for google
+        GlobalVariables.clothChangeMenWomenFacebookURL =
+            mapValues1['clothChangeMenWomenImageFacebook'];
+        showLog(
+          'Facebook Ads Cloth men women URL is : ${GlobalVariables.clothChangeMenWomenFacebookURL}',
+        );
+        final Uri uriMenWomenFBAds = Uri.parse(
+          GlobalVariables.clothChangeMenWomenFacebookURL,
+        );
+        GlobalVariables.clothChangeMenWomenFacebookBaseURL = uriMenWomenFBAds
+            .resolve('.')
+            .toString();
+        showLog(
+          'Facebook Ads Cloth men women Base URL is : ${GlobalVariables.clothChangeMenWomenFacebookBaseURL}',
+        );
+
+        ///men women image for google
+        GlobalVariables.clothChangeMenWomenPlayStoreURL =
+            mapValues1['clothChangeMenWomenImagePlayStore'];
+        showLog(
+          'Play Store Cloth men women URL is : ${GlobalVariables.clothChangeMenWomenPlayStoreURL}',
+        );
+        final Uri uriMenWomenPSAds = Uri.parse(
+          GlobalVariables.clothChangeMenWomenPlayStoreURL,
+        );
+        GlobalVariables.clothChangeMenWomenPlayStoreBaseURL = uriMenWomenPSAds
+            .resolve('.')
+            .toString();
+        showLog(
+          'Play Store Cloth men women Base URL is : ${GlobalVariables.clothChangeMenWomenPlayStoreBaseURL}',
+        );
+
+        // TODO: when submit
+        await SharedPreferenceUtils.setIsFacebookInstaller(true);
 
         await getInstalledReferrer();
 

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:ai_dress_up/view/bottom_navigation_screen.dart';
+import 'package:ai_dress_up/view_model/image_data_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -134,21 +137,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       );
 
       //TODO: when submit
-      await ref.read(creditProvider.notifier).addCredit(500);
+      // await ref.read(creditProvider.notifier).setCredit(500);
 
       await ref.read(creditProvider.notifier).reloadCredit();
 
-      Future.microtask(
-        () => ref
-            .read(videoDataProvider(VideoDataType.trending).notifier)
-            .fetchVideoData(),
-      );
-      showLog('user is from getted ${AdsVariable.userFrom}');
-      if (AdsVariable.userFrom.toLowerCase() == 'facebook') {
+      showLog('user is from got ${AdsVariable.userFrom}');
+
+      _loadAllBackgroundData();
+      /*if (AdsVariable.userFrom.toLowerCase() == 'facebook') {
         Future.microtask(
           () => ref
-              .read(videoDataProvider(VideoDataType.homeGoogle).notifier)
+              .read(videoDataProvider(VideoDataType.homeFacebook).notifier)
               .fetchVideoData(),
+        );
+        Future.microtask(
+              () => ref
+              .read(imageDataProvider(ImageDataType.facebookMenWomenImages).notifier)
+              .fetchImageData(),
+        );
+        Future.microtask(
+              () => ref
+              .read(imageDataProvider(ImageDataType.playstoreCategoryImages).notifier)
+              .fetchImageData(),
         );
       } else if (AdsVariable.userFrom == 'google') {
         Future.microtask(
@@ -156,23 +166,120 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               .read(videoDataProvider(VideoDataType.homeGoogle).notifier)
               .fetchVideoData(),
         );
+        Future.microtask(
+              () => ref
+              .read(imageDataProvider(ImageDataType.googleMenWomenImages).notifier)
+              .fetchImageData(),
+        );
+        Future.microtask(
+              () => ref
+              .read(imageDataProvider(ImageDataType.googleCategoryImages).notifier)
+              .fetchImageData(),
+        );
       } else if (AdsVariable.userFrom == 'other') {
         Future.microtask(
           () => ref
               .read(videoDataProvider(VideoDataType.homeNormal).notifier)
               .fetchVideoData(),
         );
+        Future.microtask(
+              () => ref
+              .read(imageDataProvider(ImageDataType.playstoreMenWomenImages).notifier)
+              .fetchImageData(),
+        );
+        Future.microtask(
+              () => ref
+              .read(imageDataProvider(ImageDataType.playstoreCategoryImages).notifier)
+              .fetchImageData(),
+        );
       }
       await ref.watch(imageResultProvider).loadImages();
       await ref.watch(videoResultProvider).loadVideos();
-      await ref.read(freeVideoUsageProvider.notifier).refresh();
+      await ref.read(freeVideoUsageProvider.notifier).refresh();*/
     });
+  }
+
+  void _loadAllBackgroundData() {
+    unawaited(ref.read(imageResultProvider).loadImages());
+    unawaited(ref.read(videoResultProvider).loadVideos());
+    unawaited(ref.read(freeVideoUsageProvider.notifier).refresh());
+
+    if (AdsVariable.userFrom.toLowerCase() == 'facebook') {
+      unawaited(
+        ref
+            .read(videoDataProvider(VideoDataType.homeFacebook).notifier)
+            .fetchVideoData(),
+      );
+
+      unawaited(
+        ref
+            .read(
+              imageDataProvider(ImageDataType.facebookMenWomenImages).notifier,
+            )
+            .fetchImageData(),
+      );
+
+      unawaited(
+        ref
+            .read(
+              imageDataProvider(ImageDataType.facebookCategoryImages).notifier,
+            )
+            .fetchImageData(),
+      );
+    }
+
+    if (AdsVariable.userFrom == 'google') {
+      unawaited(
+        ref
+            .read(videoDataProvider(VideoDataType.homeGoogle).notifier)
+            .fetchVideoData(),
+      );
+
+      unawaited(
+        ref
+            .read(
+              imageDataProvider(ImageDataType.googleMenWomenImages).notifier,
+            )
+            .fetchImageData(),
+      );
+
+      unawaited(
+        ref
+            .read(
+              imageDataProvider(ImageDataType.googleCategoryImages).notifier,
+            )
+            .fetchImageData(),
+      );
+    }
+
+    if (AdsVariable.userFrom == 'other') {
+      unawaited(
+        ref
+            .read(videoDataProvider(VideoDataType.homeNormal).notifier)
+            .fetchVideoData(),
+      );
+
+      unawaited(
+        ref
+            .read(
+              imageDataProvider(ImageDataType.playstoreMenWomenImages).notifier,
+            )
+            .fetchImageData(),
+      );
+
+      unawaited(
+        ref
+            .read(
+              imageDataProvider(ImageDataType.playstoreCategoryImages).notifier,
+            )
+            .fetchImageData(),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.black,
       body: SafeArea(
         top: false,
         child: Container(

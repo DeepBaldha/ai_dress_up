@@ -467,6 +467,78 @@ abstract class AppLocalizations {
   /// **'More'**
   String get more;
 
+  /// No description provided for @view.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get view;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @videoGeneratedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Video Generated Successfully'**
+  String get videoGeneratedSuccessfully;
+
+  /// No description provided for @pendingVideoGeneration.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending video generation'**
+  String get pendingVideoGeneration;
+
+  /// No description provided for @youCanSeeProcessInHomeScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'You can see process in home screen'**
+  String get youCanSeeProcessInHomeScreen;
+
+  /// No description provided for @cancelTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Task?'**
+  String get cancelTask;
+
+  /// No description provided for @cancelTaskMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this video generation?'**
+  String get cancelTaskMessage;
+
+  /// No description provided for @dismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get dismiss;
+
+  /// No description provided for @videoGeneratedSuccessfullyAndMovedToCreation.
+  ///
+  /// In en, this message translates to:
+  /// **'Video generated successfully and moved to creation'**
+  String get videoGeneratedSuccessfullyAndMovedToCreation;
+
+  /// No description provided for @complete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get complete;
+
+  /// No description provided for @videoReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Video Ready'**
+  String get videoReady;
+
   /// No description provided for @creation.
   ///
   /// In en, this message translates to:

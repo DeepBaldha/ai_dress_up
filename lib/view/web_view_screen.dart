@@ -47,9 +47,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.white,
           automaticallyImplyLeading: false,
           title: Row(
             children: [
@@ -71,8 +71,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                   child: Text(
                     widget.title,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
                       fontSize: 70.sp,
                     ),
                   ),

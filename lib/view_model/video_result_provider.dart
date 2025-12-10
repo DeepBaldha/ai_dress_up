@@ -1,29 +1,29 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:ai_dress_up/utils/shared_preference_utils.dart';
 import 'package:ai_dress_up/view_model/thumbnail_generator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import '../model/video_result_model.dart';
 
-final videoResultProvider = ChangeNotifierProvider<VideoResultNotifier>((ref) {
+final videoResultProvider =
+ChangeNotifierProvider<VideoResultNotifier>((ref) {
   return VideoResultNotifier();
 });
 
 class VideoResultNotifier extends ChangeNotifier {
   static const String _storageKey = 'video_results_history_secure';
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   List<VideoResultModel> _videos = [];
   bool _isLoading = false;
-  bool _isInitialized = false;
+  bool isInitialized = false;
 
   List<VideoResultModel> get videos => _videos;
   int get videoCount => _videos.length;
   bool get isEmpty => _videos.isEmpty;
   bool get isLoading => _isLoading;
 
-  /// Load videos from Secure Storage
   Future<void> loadVideos() async {
     if (_isLoading) return;
 
@@ -31,180 +31,153 @@ class VideoResultNotifier extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final jsonString = await _secureStorage.read(key: _storageKey);
-
-      debugPrint('📦 Loading videos from secure storage...');
+      final jsonString = SharedPreferenceUtils.getString(_storageKey);
 
       if (jsonString != null && jsonString.isNotEmpty) {
         final List<dynamic> jsonList = jsonDecode(jsonString);
-        _videos = jsonList.map((json) => VideoResultModel.fromJson(json)).toList();
-        debugPrint('✅ Loaded ${_videos.length} videos from secure storage');
+        _videos = jsonList
+            .map((json) => VideoResultModel.fromJson(json))
+            .toList();
       } else {
-        debugPrint('📦 No videos found in secure storage');
         _videos = [];
       }
 
-      _isInitialized = true;
+      isInitialized = true;
     } catch (e) {
-      debugPrint('❌ Error loading videos (secure): $e');
+      debugPrint('❌ Error loading videos: $e');
       _videos = [];
-      _isInitialized = true;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      isInitialized = true;
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
-  /// Add new video result with automatic thumbnail generation
-  Future<void> addVideo(String videoPath, {String? title, String? thumbnailUrl}) async {
+  Future<void> addVideo(
+      String videoPath, {
+        String? title,
+        String? thumbnailUrl,
+      }) async {
     try {
-      if (!_isInitialized) await loadVideos();
+      if (!isInitialized) {
+        await loadVideos();
+      }
 
-      final existingIndex = _videos.indexWhere((v) => v.videoUrl == videoPath);
-      if (existingIndex != -1) {
-        debugPrint('⚠️ Video already exists in history, skipping duplicate');
+      // Avoid duplicates
+      if (_videos.any((v) => v.videoUrl == videoPath)) {
+        debugPrint('⚠️ Video already exists. Skipped.');
         return;
       }
 
-      String? finalThumbnailUrl = thumbnailUrl;
+      // Generate thumbnail if needed
+      String? finalThumb = thumbnailUrl;
 
-      if (finalThumbnailUrl == null || finalThumbnailUrl.isEmpty) {
-        debugPrint('🎬 No thumbnail provided, generating...');
-
-        if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) {
-          finalThumbnailUrl = await ThumbnailGenerator.generateFromUrl(videoPath);
+      if (finalThumb == null || finalThumb.isEmpty) {
+        if (videoPath.startsWith('http')) {
+          finalThumb =
+          await ThumbnailGenerator.generateFromUrl(videoPath);
         } else {
-          finalThumbnailUrl = await ThumbnailGenerator.generateFromLocalVideo(videoPath);
-        }
-
-        if (finalThumbnailUrl != null) {
-          debugPrint('✅ Thumbnail generated successfully');
-        } else {
-          debugPrint('⚠️ Failed to generate thumbnail, using default icon');
+          finalThumb = await ThumbnailGenerator.generateFromLocalVideo(
+              videoPath);
         }
       }
 
-      final videoResult = VideoResultModel(
+      final newVideo = VideoResultModel(
         videoUrl: videoPath,
         title: title ?? 'Video ${DateTime.now().millisecondsSinceEpoch}',
-        thumbnailUrl: finalThumbnailUrl,
+        thumbnailUrl: finalThumb,
         timestamp: DateTime.now(),
       );
 
-      _videos.insert(0, videoResult);
-      await _saveToSecureStorage();
-      notifyListeners();
+      _videos.insert(0, newVideo);
 
-      debugPrint('✅ Video added to history: $videoPath');
-      debugPrint('📊 Total videos now: ${_videos.length}');
+      await _save();
+      notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error adding video (secure): $e');
-      rethrow;
+      debugPrint('❌ Error adding video: $e');
     }
   }
 
-  /// Regenerate thumbnail for a specific video
+  Future<void> _save() async {
+    try {
+      final jsonString =
+      jsonEncode(_videos.map((v) => v.toJson()).toList());
+
+      await SharedPreferenceUtils.saveString(_storageKey, jsonString);
+    } catch (e) {
+      debugPrint('❌ Error saving videos: $e');
+    }
+  }
+
   Future<void> regenerateThumbnail(int index) async {
     try {
       if (index < 0 || index >= _videos.length) return;
 
       final video = _videos[index];
-      debugPrint('🔄 Regenerating thumbnail for: ${video.videoUrl}');
+      String? newThumb;
 
-      String? newThumbnail;
-      if (video.videoUrl.startsWith('http://') || video.videoUrl.startsWith('https://')) {
-        newThumbnail = await ThumbnailGenerator.generateFromUrl(video.videoUrl);
+      if (video.videoUrl.startsWith('http')) {
+        newThumb =
+        await ThumbnailGenerator.generateFromUrl(video.videoUrl);
       } else {
-        newThumbnail = await ThumbnailGenerator.generateFromLocalVideo(video.videoUrl);
+        newThumb =
+        await ThumbnailGenerator.generateFromLocalVideo(video.videoUrl);
       }
 
-      if (newThumbnail != null) {
-        if (video.thumbnailUrl != null) {
-          await ThumbnailGenerator.deleteThumbnail(video.thumbnailUrl);
-        }
-
+      if (newThumb != null) {
         _videos[index] = VideoResultModel(
           videoUrl: video.videoUrl,
           title: video.title,
-          thumbnailUrl: newThumbnail,
+          thumbnailUrl: newThumb,
           timestamp: video.timestamp,
         );
 
-        await _saveToSecureStorage();
+        await _save();
         notifyListeners();
-        debugPrint('✅ Thumbnail regenerated successfully');
       }
     } catch (e) {
-      debugPrint('❌ Error regenerating thumbnail (secure): $e');
+      debugPrint('❌ Error regenerating thumbnail: $e');
     }
   }
 
-  /// Delete a video from history
   Future<void> deleteVideo(int index) async {
     try {
-      if (index >= 0 && index < _videos.length) {
-        final deletedVideo = _videos[index];
-        final videoPath = deletedVideo.videoUrl;
+      if (index < 0 || index >= _videos.length) return;
 
-        if (deletedVideo.thumbnailUrl != null) {
-          await ThumbnailGenerator.deleteThumbnail(deletedVideo.thumbnailUrl);
-        }
+      final video = _videos[index];
 
-        if (videoPath.startsWith('/')) {
-          final file = File(videoPath);
-          if (await file.exists()) {
-            await file.delete();
-            debugPrint('🗑️ Deleted local file: $videoPath');
-          }
-        }
-
-        _videos.removeAt(index);
-        await _saveToSecureStorage();
-        notifyListeners();
-        debugPrint('🗑️ Removed video entry: ${deletedVideo.videoUrl}');
+      // Delete local file if exists
+      if (video.videoUrl.startsWith('/')) {
+        final file = File(video.videoUrl);
+        if (await file.exists()) await file.delete();
       }
+
+      _videos.removeAt(index);
+
+      await _save();
+      notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error deleting video (secure): $e');
-      rethrow;
+      debugPrint('❌ Error deleting video: $e');
     }
   }
 
-  /// Clear all videos (and optionally local files)
   Future<void> clearAll({bool deleteLocalFiles = true}) async {
     try {
       if (deleteLocalFiles) {
         for (final video in _videos) {
-          if (video.thumbnailUrl != null) {
-            await ThumbnailGenerator.deleteThumbnail(video.thumbnailUrl);
-          }
-
-          final file = File(video.videoUrl);
-          if (await file.exists()) {
-            await file.delete();
+          if (video.videoUrl.startsWith('/')) {
+            final file = File(video.videoUrl);
+            if (await file.exists()) await file.delete();
           }
         }
-        debugPrint('🧹 Deleted all local video files and thumbnails');
       }
 
       _videos.clear();
-      await _secureStorage.delete(key: _storageKey);
-      notifyListeners();
-      debugPrint('🗑️ Cleared all video entries');
-    } catch (e) {
-      debugPrint('❌ Error clearing videos (secure): $e');
-      rethrow;
-    }
-  }
+      await SharedPreferenceUtils.saveString(_storageKey, "[]");
 
-  /// Save to Secure Storage
-  Future<void> _saveToSecureStorage() async {
-    try {
-      final jsonString = jsonEncode(_videos.map((v) => v.toJson()).toList());
-      await _secureStorage.write(key: _storageKey, value: jsonString);
-      debugPrint('💾 Saved ${_videos.length} videos to secure storage');
+      notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error saving to secure storage: $e');
-      rethrow;
+      debugPrint('❌ Error clearing videos: $e');
     }
   }
 }

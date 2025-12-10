@@ -6,7 +6,7 @@ import '../model/video_model.dart';
 import '../utils/utils.dart';
 import 'dart:convert';
 
-enum VideoDataType { homeNormal, homeFacebook, homeGoogle, trending }
+enum VideoDataType { homeNormal, homeFacebook, homeGoogle }
 
 final videoDataProvider =
     StateNotifierProvider.family<
@@ -35,8 +35,6 @@ class VideoDataNotifier extends StateNotifier<AsyncValue<dynamic>> {
         return GlobalVariables.videoListForFacebookAds;
       case VideoDataType.homeGoogle:
         return GlobalVariables.videoListForGoogleAds;
-      case VideoDataType.trending:
-        return GlobalVariables.videoListTrendingURL;
     }
   }
 
@@ -48,8 +46,6 @@ class VideoDataNotifier extends StateNotifier<AsyncValue<dynamic>> {
         return 'Google';
       case VideoDataType.homeNormal:
         return 'PlayStore';
-      case VideoDataType.trending:
-        return 'Trending';
     }
   }
 
@@ -73,9 +69,17 @@ class VideoDataNotifier extends StateNotifier<AsyncValue<dynamic>> {
             .map((item) => VideoModel.fromJson(item))
             .toList();
 
-        state = AsyncValue.data(videos);
+        final originalVideos = videos;
+        final shuffledVideos = [...videos]..shuffle();
+
+        state = AsyncValue.data({
+          'original': originalVideos,
+          'shuffled': shuffledVideos,
+        });
+
         showLog('✅ $_logName video data loaded: ${videos.length} items');
-      } else {
+      }
+      else {
         showLog(
           '⚠️ Failed with status ${response.statusCode} data type : ${_logName}, retrying in 3 seconds...',
         );
@@ -177,8 +181,6 @@ class MultiVideoDataNotifier
         return GlobalVariables.videoListForFacebookAds;
       case VideoDataType.homeGoogle:
         return GlobalVariables.videoListForGoogleAds;
-      case VideoDataType.trending:
-        return GlobalVariables.videoListTrendingURL;
     }
   }
 

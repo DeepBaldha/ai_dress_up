@@ -60,7 +60,7 @@ class _RetryingNetworkImageState extends State<RetryingNetworkImage> {
     switch (widget.placeholderType) {
       case PlaceholderType.lottie:
         return Container(
-          color: Colors.grey[900],
+          color: Colors.black.withValues(alpha: 0.1),
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -71,14 +71,14 @@ class _RetryingNetworkImageState extends State<RetryingNetworkImage> {
                   height: 150.w,
                 ),
                 if (_retryCount > 0) ...[
-                  10.verticalSpace,
+                  /*10.verticalSpace,
                   Text(
                     'Loading... ($_retryCount)',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 30.sp,
                     ),
-                  ),
+                  ),*/
                 ],
               ],
             ),

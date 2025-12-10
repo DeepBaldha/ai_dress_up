@@ -1,3 +1,5 @@
+import 'package:ai_dress_up/view_model/persistent_task_storage_service.dart';
+import 'package:ai_dress_up/view_model/video_result_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import '../api_services/dezgo_image_prompt.dart';
 import '../api_services/pollo_ai_scrap_service.dart';
 import '../api_services/pollo_api_services.dart';
 import '../api_services/sea_art_scrap_services.dart';
+import '../api_services/upload_image_to_seaart_service.dart';
 import '../model/video_model.dart';
 import '../utils/custom_widgets/loading_with_percentage.dart';
 import '../utils/firebase_analytics_service.dart';
@@ -15,6 +18,7 @@ import '../utils/loading_dialog.dart';
 import '../utils/utils.dart';
 import '../view/image_result_full_screen.dart';
 import '../view/video_result_screen.dart';
+import 'background_video_provider.dart';
 import 'credit_provider.dart';
 import 'free_usage_provider.dart';
 
@@ -27,6 +31,9 @@ class VideoGenerateState {
   final String? errorMessage;
   final double downloadProgress;
   final int generationProgress;
+  final String? currentTaskId; // 🔥 Track task ID
+  final String? currentApiType; // 🔥 Track API type
+  final VideoModel? currentVideoModel; // 🔥 Track video model
 
   const VideoGenerateState({
     this.isLoading = false,
@@ -36,6 +43,9 @@ class VideoGenerateState {
     this.errorMessage,
     this.downloadProgress = 0.0,
     this.generationProgress = 0,
+    this.currentTaskId,
+    this.currentApiType,
+    this.currentVideoModel,
   });
 
   VideoGenerateState copyWith({
@@ -46,6 +56,9 @@ class VideoGenerateState {
     String? errorMessage,
     double? downloadProgress,
     int? generationProgress,
+    String? currentTaskId,
+    String? currentApiType,
+    VideoModel? currentVideoModel,
   }) {
     return VideoGenerateState(
       isLoading: isLoading ?? this.isLoading,
@@ -55,8 +68,18 @@ class VideoGenerateState {
       errorMessage: errorMessage,
       downloadProgress: downloadProgress ?? this.downloadProgress,
       generationProgress: generationProgress ?? this.generationProgress,
+      currentTaskId: currentTaskId ?? this.currentTaskId,
+      currentApiType: currentApiType ?? this.currentApiType,
+      currentVideoModel: currentVideoModel ?? this.currentVideoModel,
     );
   }
+
+  bool get isSeaArtApi =>
+      currentApiType == 'seaart_scrap_prompt' ||
+          currentApiType == 'seaart_scrap_tempid' ||
+          currentApiType == 'seaart_scrap_apply';
+
+  bool get canMoveToBackground => isSeaArtApi && currentTaskId != null;
 }
 
 /// Provider (Notifier)
@@ -66,11 +89,18 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
 
   /// Main method: determine API type and call appropriate generator
   Future<void> generate(
-    BuildContext context,
-    VideoModel model,
-    String imagePath,
-  ) async {
+      BuildContext context,
+      VideoModel model,
+      String imagePath,
+      ) async {
     if (state.isLoading) return;
+
+    // 🔥 Check if background task is already running
+    final bgTask = ref.read(backgroundTaskProvider);
+    if (bgTask.hasActiveTask) {
+      showToast('A video is already being generated in background');
+      return;
+    }
 
     state = state.copyWith(
       isLoading: true,
@@ -80,11 +110,18 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
       localImagePath: null,
       downloadProgress: 0.0,
       generationProgress: 0,
+      currentTaskId: null,
+      currentApiType: model.apiType,
+      currentVideoModel: model,
     );
 
     bool useProgressDialog = model.apiType != 'dezgo_image';
 
     if (useProgressDialog) {
+      LoadingProgressDialog.onHideCallback = () {
+        _moveToBackground(context);
+      };
+
       LoadingProgressDialog.show(
         context,
         percentage: 0,
@@ -103,7 +140,6 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
 
     showLog('🚀 Starting generation for ${model.title} (${model.apiType})');
 
-    // 🎁 Check if video can be used for free
     final freeVideoNotifier = ref.read(freeVideoUsageProvider.notifier);
     final canUseFree = freeVideoNotifier.canUseFree(model);
 
@@ -147,7 +183,6 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
           throw Exception('❌ Unknown API type: ${model.apiType}');
       }
 
-      // Check if generation actually failed
       if (state.errorMessage != null) {
         shouldRefund = true;
       }
@@ -174,7 +209,7 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
         final freeVideoNotifier = ref.read(freeVideoUsageProvider.notifier);
         final wasFree =
             freeVideoNotifier.getUpdatedVideo(model).isOneTimeFree == false &&
-            model.isOneTimeFree == true; // Was free, but now marked as used
+                model.isOneTimeFree == true;
 
         if (wasFree) {
           await ref
@@ -188,15 +223,18 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
           showLog('💸 Refunded ${model.creditCharge} credits due to error');
         }
       }
+
+      // 🔥 Clear callback
+      LoadingProgressDialog.onHideCallback = null;
     }
   }
 
   /// POLLO API (prompt-based)
   Future<void> _generatePolloApi(
-    BuildContext context,
-    VideoModel model,
-    String imagePath,
-  ) async {
+      BuildContext context,
+      VideoModel model,
+      String imagePath,
+      ) async {
     showLog('here1');
     final notifier = ref.read(polloApiProvider.notifier);
     await notifier.makePolloAiApiCall(fileUrl: imagePath, prompt: model.prompt);
@@ -207,10 +245,10 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
 
   /// POLLO SCRAP (template-based)
   Future<void> _generatePolloScrap(
-    BuildContext context,
-    VideoModel model,
-    String imagePath,
-  ) async {
+      BuildContext context,
+      VideoModel model,
+      String imagePath,
+      ) async {
     final notifier = ref.read(polloAiScrapProvider.notifier);
     await notifier.uploadAndGetResultUsingPollScrap(
       filePath: imagePath,
@@ -223,100 +261,173 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
 
   /// SEAART SCRAP (prompt-based)
   Future<void> _generateSeaArtPrompt(
-    BuildContext context,
-    VideoModel model,
-    String imagePath,
-  ) async {
+      BuildContext context,
+      VideoModel model,
+      String imagePath,
+      ) async {
     final notifier = ref.read(seaArtScarpProvider.notifier);
-    await notifier.generateVideoFromImageUsingPrompt(
-      imagePath: imagePath,
+
+    final taskId = await notifier.createVideoTask(
+      imageUrl: await _uploadImageForSeaArt(imagePath),
       prompt: model.prompt,
       modelNo: model.seaArtModelNo,
       versionNo: model.seaArtVersionNo,
-      onProgressUpdate: (progress) {
-        // Update progress in UI
-        state = state.copyWith(generationProgress: progress);
-        if (context.mounted) {
-          LoadingProgressDialog.update(
-            context,
-            progress,
-            message1: '${getTranslated(context)!.processing}... ($progress%)',
-            message2: getTranslated(
-              context,
-            )!.yourResultIsOnTheWayJustAFewMinutesToGo,
-          );
-        }
-      },
     );
 
-    final data = ref.read(seaArtScarpProvider);
-    await _handleResult(context, data.videoUrl, data.errorMessage);
+    if (taskId != null) {
+      state = state.copyWith(currentTaskId: taskId);
+      showLog('✅ Got task ID: $taskId');
+
+      await ref.read(persistentTaskStorageProvider).savePendingTask(
+        taskId: taskId,
+        apiType: model.apiType,
+      );
+
+      // 🔥 Show hide button now that we have task ID
+      if (context.mounted) {
+        LoadingProgressDialog.update(
+          context,
+          0,
+          message1: '${getTranslated(context)!.processing}... (0%)',
+          message2: getTranslated(context)!.yourResultIsOnTheWayJustAFewMinutesToGo,
+          showHideButton: true
+        );
+      }
+
+      // Now poll the task
+      final videoUrl = await notifier.getVideoUrlByTaskId(
+        taskId,
+        onProgressUpdate: (progress) {
+          state = state.copyWith(generationProgress: progress);
+          if (context.mounted && state.isLoading) {
+            LoadingProgressDialog.update(
+              context,
+              progress,
+              message1: '${getTranslated(context)!.processing}... ($progress%)',
+              message2: getTranslated(context)!.yourResultIsOnTheWayJustAFewMinutesToGo,
+            );
+          }
+        },
+      );
+
+      await _handleResult(context, videoUrl, null);
+    } else {
+      await _handleResult(context, null, 'Failed to create task');
+    }
   }
 
   /// SEAART SCRAP (templateId-based)
   Future<void> _generateSeaArtTemplate(
-    BuildContext context,
-    VideoModel model,
-    String imagePath,
-  ) async {
+      BuildContext context,
+      VideoModel model,
+      String imagePath,
+      ) async {
     final notifier = ref.read(seaArtScarpProvider.notifier);
-    await notifier.generateVideoFromTemplate(
-      imagePath: imagePath,
+
+    final imageUrl = await _uploadImageForSeaArt(imagePath);
+
+    final taskId = await notifier.createVideoTaskForTemplateId(
+      imageUrl: imageUrl,
       templateId: model.seaArtTemplateId,
-      onProgressUpdate: (progress) {
-        state = state.copyWith(generationProgress: progress);
-        if (context.mounted) {
-          LoadingProgressDialog.update(
-            context,
-            progress,
-            message1: '${getTranslated(context)!.processing}... ($progress%)',
-            message2: getTranslated(
-              context,
-            )!.yourResultIsOnTheWayJustAFewMinutesToGo,
-          );
-        }
-      },
     );
 
-    final data = ref.read(seaArtScarpProvider);
-    await _handleResult(context, data.videoUrl, data.errorMessage);
+    if (taskId != null) {
+      state = state.copyWith(currentTaskId: taskId);
+      showLog('✅ Got task ID: $taskId');
+
+
+      await ref.read(persistentTaskStorageProvider).savePendingTask(
+        taskId: taskId,
+        apiType: model.apiType,
+      );
+
+      final videoUrl = await notifier.getVideoUrlByTaskId(
+        taskId,
+        onProgressUpdate: (progress) {
+          state = state.copyWith(generationProgress: progress);
+          if (context.mounted && state.isLoading) {
+            LoadingProgressDialog.update(
+              context,
+              progress,
+              message1: '${getTranslated(context)!.processing}... ($progress%)',
+              message2: getTranslated(context)!.yourResultIsOnTheWayJustAFewMinutesToGo,
+              showHideButton: true
+            );
+          }
+        },
+      );
+
+      await _handleResult(context, videoUrl, null);
+    } else {
+      await _handleResult(context, null, 'Failed to create task');
+    }
   }
 
   /// SEAART SCRAP (applyId-based)
   Future<void> _generateSeaArtApply(
-    BuildContext context,
-    VideoModel model,
-    String imagePath,
-  ) async {
+      BuildContext context,
+      VideoModel model,
+      String imagePath,
+      ) async {
     final notifier = ref.read(seaArtScarpProvider.notifier);
-    await notifier.generateVideoFromApplyId(
+
+    // Create task
+    final taskId = await notifier.createVideoTaskForApplyId(
       imagePath: imagePath,
       videoModel: model,
-      onProgressUpdate: (progress) {
-        state = state.copyWith(generationProgress: progress);
-        if (context.mounted) {
-          LoadingProgressDialog.update(
-            context,
-            progress,
-            message1: '${getTranslated(context)!.processing}... ($progress%)',
-            message2: getTranslated(
-              context,
-            )!.yourResultIsOnTheWayJustAFewMinutesToGo,
-          );
-        }
-      },
     );
 
-    final data = ref.read(seaArtScarpProvider);
-    await _handleResult(context, data.videoUrl, data.errorMessage);
+
+
+    if (taskId != null) {
+      state = state.copyWith(currentTaskId: taskId);
+      showLog('✅ Got task ID: $taskId');
+
+      await ref.read(persistentTaskStorageProvider).savePendingTask(
+        taskId: taskId,
+        apiType: model.apiType,
+      );
+
+      final videoUrl = await notifier.getVideoUrlByTaskId(
+        taskId,
+        onProgressUpdate: (progress) {
+          state = state.copyWith(generationProgress: progress);
+          if (context.mounted && state.isLoading) {
+            LoadingProgressDialog.update(
+              context,
+              progress,
+              message1: '${getTranslated(context)!.processing}... ($progress%)',
+              message2: getTranslated(context)!.yourResultIsOnTheWayJustAFewMinutesToGo,
+              showHideButton: true
+            );
+          }
+        },
+      );
+
+      await _handleResult(context, videoUrl, null);
+    } else {
+      await _handleResult(context, null, 'Failed to create task');
+    }
+  }
+
+  /// Helper: Upload image for SeaArt
+  Future<String> _uploadImageForSeaArt(String imagePath) async {
+    final uploadNotifier = ref.read(uploadImageToSeaArtProvider.notifier);
+    final imageUrl = await uploadNotifier.handleUpload(filePath: imagePath);
+
+    if (imageUrl == null) {
+      throw Exception("Failed to upload image");
+    }
+
+    return imageUrl;
   }
 
   /// DEZGO IMAGE (image-to-image)
   Future<void> _generateDezgoImage(
-    BuildContext context,
-    VideoModel model,
-    String imagePath,
-  ) async {
+      BuildContext context,
+      VideoModel model,
+      String imagePath,
+      ) async {
     showLog('🎨 Starting Dezgo image generation');
 
     final notifier = ref.read(dezgoProcessProvider.notifier);
@@ -335,23 +446,20 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
 
   /// Handle image result (for Dezgo)
   Future<void> _handleImageResult(
-    BuildContext context,
-    String? localPath,
-    String? error,
-  ) async {
+      BuildContext context,
+      String? localPath,
+      String? error,
+      ) async {
     if (localPath != null) {
       showLog('✅ Image generated successfully: $localPath');
       state = state.copyWith(isLoading: false, localImagePath: localPath);
 
-      // Hide loading dialog
       if (context.mounted) {
         LoadingDialog.hide(context);
       }
 
-      // Small delay to ensure loader is dismissed
       await Future.delayed(const Duration(milliseconds: 150));
 
-      // Navigate to result screen
       if (context.mounted) {
         await _navigateToImageResult(context, localPath);
       }
@@ -371,9 +479,9 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
 
   /// Navigate to image result screen
   Future<void> _navigateToImageResult(
-    BuildContext context,
-    String localPath,
-  ) async {
+      BuildContext context,
+      String localPath,
+      ) async {
     showLog('🚀 Navigating to ImageResultFullScreen...');
 
     await Navigator.push(
@@ -390,12 +498,31 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
     showLog('✅ Navigation complete');
   }
 
+  // Key changes in video_generate_provider.dart:
+
+// 1. Fix _handleResult to not interfere with background tasks
   Future<void> _handleResult(
-    BuildContext context,
-    String? videoUrl,
-    String? error,
-  ) async {
+      BuildContext context,
+      String? videoUrl,
+      String? error,
+      ) async {
+    // 🔥 Check if task moved to background
+    final bgTask = ref.read(backgroundTaskProvider);
+    if (bgTask.hasActiveTask && bgTask.taskId == state.currentTaskId) {
+      showLog("⛔ Task moved to background, skipping foreground handling");
+      return;
+    }
+
+    // If we're no longer loading but background isn't handling it, something went wrong
+    if (!state.isLoading) {
+      showLog("⚠️ Foreground cancelled without background takeover");
+      return;
+    }
+
     if (videoUrl != null) {
+      await ref.read(persistentTaskStorageProvider).markTaskCompleted();
+
+
       showLog('✅ Video generated successfully: $videoUrl');
       state = state.copyWith(
         isLoading: false,
@@ -419,14 +546,23 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
 
         final localPath = await _downloadVideoToLocal(videoUrl, context);
 
+        try {
+          showLog("💾 Auto-saving video to history...");
+          await ref.read(videoResultProvider).addVideo(
+            localPath,
+            title: 'Video ${DateTime.now().millisecondsSinceEpoch}',
+            thumbnailUrl: null,
+          );
+          showLog("✅ Auto-saved to history successfully");
+        } catch (e) {
+          showLog("❌ Auto-save failed: $e");
+        }
+
         state = state.copyWith(isDownloading: false, downloadProgress: 1.0);
         showLog('✅ Download complete. Local path: $localPath');
 
-        showLog('🔍 Checking context.mounted: ${context.mounted}');
-
         if (!context.mounted) {
           showLog('⚠️ Context not mounted! Cannot navigate.');
-          LoadingProgressDialog.hide(context);
           return;
         }
 
@@ -434,9 +570,6 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
         showLog('✅ Loader hidden');
 
         await Future.delayed(const Duration(milliseconds: 150));
-        showLog(
-          '⏱️ Delay complete, checking context again: ${context.mounted}',
-        );
 
         if (!context.mounted) {
           showLog('⚠️ Context not mounted after delay! Cannot navigate.');
@@ -484,10 +617,31 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
     }
   }
 
+  void _moveToBackground(BuildContext context) {
+    if (!state.canMoveToBackground) {
+      showLog('⚠️ Cannot move to background - no task ID or not SeaArt API');
+      return;
+    }
+
+    showLog('🔄 Moving to background: ${state.currentTaskId}');
+
+    // Start background task
+    ref.read(backgroundTaskProvider.notifier).startBackgroundTask(
+      taskId: state.currentTaskId!,
+      apiType: state.currentApiType!,
+      videoModel: state.currentVideoModel!,
+    );
+
+    // 🔥 Clear foreground state properly
+    state = const VideoGenerateState();
+
+    showLog('✅ Moved to background successfully');
+  }
+
   Future<String> _downloadVideoToLocal(
-    String videoUrl,
-    BuildContext context,
-  ) async {
+      String videoUrl,
+      BuildContext context,
+      ) async {
     final dio = Dio();
     final dir = await getApplicationDocumentsDirectory();
     final fileName = 'video_${DateTime.now().millisecondsSinceEpoch}.mp4';
@@ -508,14 +662,12 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
               context,
               100,
               message1:
-                  '${getTranslated(context)!.downloadingVideo}... (${(progress * 100).toStringAsFixed(0)}%)',
+              '${getTranslated(context)!.downloadingVideo}... (${(progress * 100).toStringAsFixed(0)}%)',
               message2: getTranslated(context)!.pleaseWait,
             );
           }
 
-          showLog(
-            '📥 Download progress: ${(progress * 100).toStringAsFixed(0)}%',
-          );
+          showLog('📥 Download progress: ${(progress * 100).toStringAsFixed(0)}%');
         }
       },
     );
@@ -524,15 +676,13 @@ class VideoGenerateNotifier extends StateNotifier<VideoGenerateState> {
       showLog('✅ Video downloaded successfully: $filePath');
       return filePath;
     } else {
-      throw Exception(
-        'Failed to download video (status: ${response.statusCode})',
-      );
+      throw Exception('Failed to download video (status: ${response.statusCode})');
     }
   }
 }
 
 /// Riverpod provider
 final videoGenerateProvider =
-    StateNotifierProvider<VideoGenerateNotifier, VideoGenerateState>((ref) {
-      return VideoGenerateNotifier(ref);
-    });
+StateNotifierProvider<VideoGenerateNotifier, VideoGenerateState>((ref) {
+  return VideoGenerateNotifier(ref);
+});

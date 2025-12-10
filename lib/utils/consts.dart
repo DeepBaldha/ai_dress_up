@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
+
 import '../model/language_model.dart';
 
 const defaultImagePath = 'asset/images/';
@@ -13,6 +15,9 @@ const flagPath = 'asset/images/languages/';
 // TODO: when submit
 const weeklyIdentifier = 'weeklysubscription:weeklysubscription';
 const yearlyIdentifier = 'yearlysubscription:yearlysubscription';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 
 const Map<String, List<Map<String, String>>> outfitCategories = {
   "Trending": [

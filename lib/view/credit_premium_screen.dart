@@ -84,10 +84,8 @@ class _CreditPremiumScreenState extends ConsumerState<CreditPremiumScreen> {
       printJson(offerings.all);
       showLog("Offerings...");
 
-      // Get available packages from offerings
       final availablePackagesList = offerings.current?.availablePackages ?? [];
 
-      // Map packages by their store product identifier for easy lookup
       availablePackages = {
         for (var package in availablePackagesList) package.identifier: package,
       };
@@ -143,7 +141,6 @@ class _CreditPremiumScreenState extends ConsumerState<CreditPremiumScreen> {
     });
   }
 
-  // Helper method to find package by store product identifier
   Package? _getPackageByStoreIdentifier(String storeIdentifier) {
     if (availablePackages == null) return null;
 
@@ -161,7 +158,7 @@ class _CreditPremiumScreenState extends ConsumerState<CreditPremiumScreen> {
   void _updateGlobalPackageReferences() {
     if (packages.isEmpty) return;
 
-    firstCoinPackage = packages.length > 0 ? packages[0] : null;
+    firstCoinPackage = packages.isNotEmpty ? packages[0] : null;
     secondCoinPackage = packages.length > 1 ? packages[1] : null;
     thirdCoinPackage = packages.length > 2 ? packages[2] : null;
     fourthCoinPackage = packages.length > 3 ? packages[3] : null;
@@ -415,8 +412,15 @@ class _CreditPremiumScreenState extends ConsumerState<CreditPremiumScreen> {
                                 } else if (email == AdsVariable.testEmail &&
                                     pass == AdsVariable.testPassword) {
                                   showLog('you are tester');
+                                  FocusScope.of(context).unfocus();
+
+                                  await Future.delayed(
+                                    Duration(microseconds: 200),
+                                  );
+
                                   Navigator.pop(context);
                                   Navigator.pop(context);
+
                                   await Future.delayed(
                                     Duration(microseconds: 200),
                                   );
@@ -511,389 +515,395 @@ class _CreditPremiumScreenState extends ConsumerState<CreditPremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: !isInitialized
-          ? Center(
-              child: Lottie.asset(
-                '${defaultImagePath}loader.json',
-                width: 200.w,
-                height: 200.h,
-              ),
-            )
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                return Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.asset(
-                        '${defaultImagePath}credit_bg.png',
-                        fit: BoxFit.fill,
-                        alignment: Alignment.topCenter,
-                      ),
-                    ),
-                    SingleChildScrollView(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0A0A0A),
+        body: !isInitialized
+            ? Center(
+                child: Lottie.asset(
+                  '${defaultImagePath}loader.json',
+                  width: 200.w,
+                  height: 200.h,
+                ),
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.asset(
+                          '${defaultImagePath}credit_bg.png',
+                          fit: BoxFit.fill,
+                          alignment: Alignment.topCenter,
                         ),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 50.w),
-                          child: Column(
-                            children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: SafeArea(
-                                  bottom: false,
+                      ),
+                      SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 50.w),
+                            child: Column(
+                              children: [
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: SafeArea(
+                                    bottom: false,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        left: 20.w,
+                                        top: 30.h,
+                                      ),
+                                      child: NewDeepPressUnpress(
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Image.asset(
+                                          '${defaultImagePath}close.png',
+                                          width: 90.w,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if(AdsVariable.showIMTester)...[
+                                450.verticalSpace
+                                ]else...[
+                                  500.verticalSpace
+                                ],
+                                Align(
+                                  alignment: Alignment.topLeft,
                                   child: Padding(
-                                    padding: EdgeInsets.only(
-                                      left: 20.w,
-                                      top: 30.h,
-                                    ),
-                                    child: NewDeepPressUnpress(
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Image.asset(
-                                        '${defaultImagePath}close.png',
-                                        width: 90.w,
+                                    padding: EdgeInsets.only(left: 20.w),
+                                    child: Text(
+                                      getTranslated(context)!.getMoreCredits,
+                                      style: TextStyle(
+                                        fontSize: 70.sp,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              500.verticalSpace,
-                              Align(
-                                alignment: Alignment.topLeft,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left: 20.w),
-                                  child: Text(
-                                    getTranslated(context)!.getMoreCredits,
-                                    style: TextStyle(
-                                      fontSize: 70.sp,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              50.verticalSpace,
-                              !isInitialized
-                                  ? Lottie.asset(
-                                      '${defaultImagePath}loader.json',
-                                      height: 500.h,
-                                    )
-                                  : packages.isEmpty
-                                  ? Center(
-                                      child: Text(
-                                        "Error loading packages",
-                                        style: TextStyle(color: Colors.black),
-                                      ),
-                                    )
-                                  : ListView.builder(
-                                      padding: EdgeInsets.zero,
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      itemCount: packages.length,
-                                      itemBuilder: (context, index) {
-                                        final package = packages[index];
-                                        final isSelected = isPackageSelected(
-                                          package,
-                                        );
-                                        final credits = getCreditsFromPackage(
-                                          package,
-                                        );
-                                        final price =
-                                            package.storeProduct.priceString;
-                                        final discount = index > 0
-                                            ? calculateDiscount(package)
-                                            : 0.0;
+                                40.verticalSpace,
+                                !isInitialized
+                                    ? Lottie.asset(
+                                        '${defaultImagePath}loader.json',
+                                        height: 500.h,
+                                      )
+                                    : packages.isEmpty
+                                    ? Center(
+                                        child: Text(
+                                          "Error loading packages",
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      )
+                                    : ListView.builder(
+                                        padding: EdgeInsets.zero,
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemCount: packages.length,
+                                        itemBuilder: (context, index) {
+                                          final package = packages[index];
+                                          final isSelected = isPackageSelected(
+                                            package,
+                                          );
+                                          final credits = getCreditsFromPackage(
+                                            package,
+                                          );
+                                          final price =
+                                              package.storeProduct.priceString;
+                                          final discount = index > 0
+                                              ? calculateDiscount(package)
+                                              : 0.0;
 
-                                        return Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: 25.h,
-                                            top: discount > 0 ? 30.h : 0,
-                                          ),
-                                          child: Stack(
-                                            clipBehavior: Clip.none,
-                                            children: [
-                                              NewDeepPressUnpress(
-                                                onTap: () {
-                                                  setState(() {
-                                                    selectedPackage = package;
-                                                  });
-                                                },
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 80.w,
-                                                  ),
-                                                  height: 230.h,
-                                                  decoration: BoxDecoration(
-                                                    color: !isSelected
-                                                        ? Color(0xffFFFFFF)
-                                                        : null,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          50.r,
-                                                        ),
-                                                    image: isSelected
-                                                        ? const DecorationImage(
-                                                            image: AssetImage(
-                                                              '${defaultImagePath}credit_plan_selected.png',
-                                                            ),
-                                                            fit: BoxFit.fill,
-                                                          )
-                                                        : null,
-                                                    border: !isSelected
-                                                        ? Border.all(
-                                                            width: 5.w,
-                                                            color: Color(
-                                                              0xfffeaeaea,
-                                                            ),
-                                                          )
-                                                        : null,
-                                                  ),
-                                                  child: Row(
-                                                    children: [
-                                                      10.horizontalSpace,
-                                                      Image.asset(
-                                                        '${defaultImagePath}credit_icon.png',
-                                                        fit: BoxFit.fill,
-                                                        width: 60.w,
-                                                      ),
-                                                      35.horizontalSpace,
-                                                      Expanded(
-                                                        child: Text(
-                                                          '$credits ${getTranslated(context)!.credits}',
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style: TextStyle(
-                                                            letterSpacing: 0.5,
-                                                            color: Colors.black,
-                                                            fontSize: 58.sp,
-                                                            fontWeight:
-                                                                FontWeight.w500,
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: 40.h,
+                                            ),
+                                            child: Stack(
+                                              clipBehavior: Clip.none,
+                                              children: [
+                                                NewDeepPressUnpress(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      selectedPackage = package;
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    padding: EdgeInsets.symmetric(
+                                                      horizontal: 80.w,
+                                                    ),
+                                                    height: 230.h,
+                                                    decoration: BoxDecoration(
+                                                      color: !isSelected
+                                                          ? Color(0xffFFFFFF)
+                                                          : null,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            50.r,
                                                           ),
-                                                        ),
-                                                      ),
-                                                      Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .end,
-                                                        children: [
-                                                          Text(
-                                                            price,
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.black,
-                                                              fontSize: 52.sp,
-                                                            ),
-                                                          ),
-                                                          if (discount > 0) ...[
-                                                            10.verticalSpace,
-                                                            Container(
-                                                              padding:
-                                                                  EdgeInsets.symmetric(
-                                                                    horizontal:
-                                                                        15.w,
-                                                                    vertical:
-                                                                        7.h,
-                                                                  ),
-                                                              decoration: BoxDecoration(
-                                                                color:
-                                                                    !isSelected
-                                                                    ? Color(
-                                                                        0xffEAEAEA,
-                                                                      )
-                                                                    : Colors
-                                                                          .black,
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      20.r,
-                                                                    ),
+                                                      image: isSelected
+                                                          ? const DecorationImage(
+                                                              image: AssetImage(
+                                                                '${defaultImagePath}credit_plan_selected.png',
                                                               ),
-                                                              child: Text.rich(
-                                                                TextSpan(
-                                                                  children: [
-                                                                    TextSpan(
-                                                                      text:
-                                                                          '${discount.toStringAsFixed(0)}%',
-                                                                      style: TextStyle(
-                                                                        color:
-                                                                            !isSelected
-                                                                            ? Colors.black
-                                                                            : Colors.white,
-                                                                        fontSize:
-                                                                            30.sp,
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                      ),
+                                                              fit: BoxFit.fill,
+                                                            )
+                                                          : null,
+                                                      border: !isSelected
+                                                          ? Border.all(
+                                                              width: 5.w,
+                                                              color: Color(
+                                                                0xfffeaeaea,
+                                                              ),
+                                                            )
+                                                          : null,
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        10.horizontalSpace,
+                                                        Image.asset(
+                                                          '${defaultImagePath}credit_icon.png',
+                                                          fit: BoxFit.fill,
+                                                          width: 60.w,
+                                                        ),
+                                                        35.horizontalSpace,
+                                                        Expanded(
+                                                          child: Text(
+                                                            '$credits ${getTranslated(context)!.credits}',
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow
+                                                                .ellipsis,
+                                                            style: TextStyle(
+                                                              letterSpacing: 0.5,
+                                                              color: Colors.black,
+                                                              fontSize: 58.sp,
+                                                              fontWeight:
+                                                                  FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .end,
+                                                          children: [
+                                                            Text(
+                                                              price,
+                                                              style: TextStyle(
+                                                                color:
+                                                                    Colors.black,
+                                                                fontSize: 52.sp,
+                                                              ),
+                                                            ),
+                                                            if (discount > 0) ...[
+                                                              10.verticalSpace,
+                                                              Container(
+                                                                padding:
+                                                                    EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          15.w,
+                                                                      vertical:
+                                                                          7.h,
                                                                     ),
-                                                                    TextSpan(
-                                                                      text:
-                                                                          ' OFF',
-                                                                      style: TextStyle(
-                                                                        color:
-                                                                            !isSelected
-                                                                            ? Colors.black
-                                                                            : Colors.white,
-                                                                        fontSize:
-                                                                            29.sp,
-                                                                        fontWeight:
-                                                                            FontWeight.normal,
+                                                                decoration: BoxDecoration(
+                                                                  color:
+                                                                      !isSelected
+                                                                      ? Color(
+                                                                          0xffEAEAEA,
+                                                                        )
+                                                                      : Colors
+                                                                            .black,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        20.r,
                                                                       ),
-                                                                    ),
-                                                                  ],
+                                                                ),
+                                                                child: Text.rich(
+                                                                  TextSpan(
+                                                                    children: [
+                                                                      TextSpan(
+                                                                        text:
+                                                                            '${discount.toStringAsFixed(0)}%',
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              !isSelected
+                                                                              ? Colors.black
+                                                                              : Colors.white,
+                                                                          fontSize:
+                                                                              30.sp,
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                        ),
+                                                                      ),
+                                                                      TextSpan(
+                                                                        text:
+                                                                            ' OFF',
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              !isSelected
+                                                                              ? Colors.black
+                                                                              : Colors.white,
+                                                                          fontSize:
+                                                                              29.sp,
+                                                                          fontWeight:
+                                                                              FontWeight.normal,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
                                                                 ),
                                                               ),
-                                                            ),
+                                                            ],
                                                           ],
-                                                        ],
-                                                      ),
-                                                    ],
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                if (AdsVariable.showIMTester)
+                                  if (widget.from == 'generate_video' ||
+                                      widget.from == 'generate_face' ||
+                                      widget.from == 'cloth_change') ...[
+                                    20.verticalSpace,
+                                    NewDeepPressUnpress(
+                                      onTap: () {
+                                        showTesterDialog();
                                       },
-                                    ),
-                              if (AdsVariable.showIMTester)
-                                if (widget.from == 'generate_video' ||
-                                    widget.from == 'generate_face' ||
-                                    widget.from == 'cloth_change') ...[
-                                  20.verticalSpace,
-                                  NewDeepPressUnpress(
-                                    onTap: () {
-                                      showTesterDialog();
-                                    },
-                                    child: Text(
-                                      'I am Tester',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ],
-                              50.verticalSpace,
-                              NewDeepPressUnpress(
-                                onTap: continueTap,
-                                child: Container(
-                                  height: 180.h,
-                                  width: double.infinity,
-                                  margin: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black,
-                                    borderRadius: BorderRadius.circular(150),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      getTranslated(context)!.getCredits,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 70.sp,
+                                      child: Text(
+                                        'I am Tester',
+                                        style: TextStyle(color: Colors.black),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ),
-                              50.verticalSpace,
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 40.w),
-                                child: Text(
-                                  getTranslated(
-                                    context,
-                                  )!.premiumBottomDescription,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Color(0xff6C6C6C),
-                                    height: 0,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 40.sp,
-                                  ),
-                                ),
-                              ),
-                              20.verticalSpace,
-                              SafeArea(
-                                top: false,
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  height: 50.h,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Flexible(
-                                        child: NewDeepPressUnpress(
-                                          onTap: () {
-                                            navigateTo(
-                                              context,
-                                              WebViewScreen(
-                                                url: privacyPolicy,
-                                                title: getTranslated(
-                                                  context,
-                                                )!.privacyPolicy,
-                                                log: 'PRIVACY_POLICY',
-                                              ),
-                                            );
-                                          },
-                                          child: Text(
-                                            getTranslated(
-                                              context,
-                                            )!.privacyPolicy,
-                                            style: TextStyle(
-                                              color: const Color(0xffBEBEBE),
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 42.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        '  •  ',
+                                  ],
+                                50.verticalSpace,
+                                NewDeepPressUnpress(
+                                  onTap: continueTap,
+                                  child: Container(
+                                    height: 180.h,
+                                    width: double.infinity,
+                                    margin: EdgeInsets.symmetric(
+                                      horizontal: 10.w,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(150),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        getTranslated(context)!.getCredits,
                                         style: TextStyle(
-                                          color: const Color(0xffBEBEBE),
-                                          fontSize: 42.sp,
+                                          color: Colors.white,
+                                          fontSize: 70.sp,
                                         ),
                                       ),
-                                      Flexible(
-                                        child: NewDeepPressUnpress(
-                                          onTap: () async {
-                                            await launchUrl(
-                                              Uri.parse(
-                                                "https://play.google.com/store/account/subscriptions",
+                                    ),
+                                  ),
+                                ),
+                                50.verticalSpace,
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 40.w),
+                                  child: Text(
+                                    getTranslated(
+                                      context,
+                                    )!.premiumBottomDescription,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Color(0xff6C6C6C),
+                                      height: 0,
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 40.sp,
+                                    ),
+                                  ),
+                                ),
+                                20.verticalSpace,
+                                SafeArea(
+                                  top: false,
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    height: 50.h,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Flexible(
+                                          child: NewDeepPressUnpress(
+                                            onTap: () {
+                                              navigateTo(
+                                                context,
+                                                WebViewScreen(
+                                                  url: privacyPolicy,
+                                                  title: getTranslated(
+                                                    context,
+                                                  )!.privacyPolicy,
+                                                  log: 'PRIVACY_POLICY',
+                                                ),
+                                              );
+                                            },
+                                            child: Text(
+                                              getTranslated(
+                                                context,
+                                              )!.privacyPolicy,
+                                              style: TextStyle(
+                                                color: const Color(0xffBEBEBE),
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 42.sp,
                                               ),
-                                            );
-                                          },
-                                          child: Text(
-                                            getTranslated(
-                                              context,
-                                            )!.subscription,
-                                            style: TextStyle(
-                                              color: const Color(0xffBEBEBE),
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 42.sp,
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Text(
+                                          '  •  ',
+                                          style: TextStyle(
+                                            color: const Color(0xffBEBEBE),
+                                            fontSize: 42.sp,
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: NewDeepPressUnpress(
+                                            onTap: () async {
+                                              await launchUrl(
+                                                Uri.parse(
+                                                  "https://play.google.com/store/account/subscriptions",
+                                                ),
+                                              );
+                                            },
+                                            child: Text(
+                                              getTranslated(
+                                                context,
+                                              )!.subscription,
+                                              style: TextStyle(
+                                                color: const Color(0xffBEBEBE),
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 42.sp,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              20.verticalSpace,
-                            ],
+                                20.verticalSpace,
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            ),
+                    ],
+                  );
+                },
+              ),
+      ),
     );
   }
 }

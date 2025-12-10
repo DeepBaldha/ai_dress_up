@@ -1,9 +1,11 @@
+import 'package:ai_dress_up/ads/ads_variable.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../utils/custom_widgets/deep_press_unpress.dart';
 import 'package:ai_dress_up/view/pick_image_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../view_model/background_video_provider.dart';
 import '../view_model/video_generator_provider.dart';
 import '../utils/firebase_analytics_service.dart';
 import 'package:video_player/video_player.dart';
@@ -107,7 +109,7 @@ class _VideoScrollScreenState extends ConsumerState<VideoScrollScreen>
         _initializeCachedVideo(_allVideos[_currentIndex]);
       }
     } else {
-      final videoState = ref.watch(videoDataProvider(VideoDataType.trending));
+      final videoState = ref.watch(videoDataProvider(VideoDataType.homeNormal));
       videoState.whenData((videos) {
         if (_allVideos.isEmpty) {
           setState(() {
@@ -185,6 +187,13 @@ class _VideoScrollScreenState extends ConsumerState<VideoScrollScreen>
   }
 
   Future<void> _pickImageCheck() async {
+    final bgTask = ref.read(backgroundTaskProvider);
+    if (bgTask.hasActiveTask) {
+      showToast('A video is already being generated in background. Please wait until it completes.');
+      showLog('⛔ Cannot start new generation - background task is active');
+      return;
+    }
+
     final video = _allVideos[_currentIndex];
 
     final freeVideoNotifier = ref.read(freeVideoUsageProvider.notifier);
@@ -246,23 +255,27 @@ class _VideoScrollScreenState extends ConsumerState<VideoScrollScreen>
     final video = _allVideos[_currentIndex];
 
     // // Check if user has sufficient credits
-    if (!ref.read(creditProvider.notifier).canAfford(video.creditCharge)) {
-      showLog(
-        'video credit : ${video.creditCharge} and your credit ${ref.read(creditProvider).toString()}',
-      );
+    if(!AdsVariable.showIMTester) {
+      if (!ref.read(creditProvider.notifier).canAfford(video.creditCharge)) {
+        showLog(
+          'video credit : ${video.creditCharge} and your credit ${ref.read(
+              creditProvider).toString()}',
+        );
 
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CreditPremiumScreen(
-            onDone: () async {
-              await _executeVideoGeneration();
-            },
-            from: 'generate_video',
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                CreditPremiumScreen(
+                  onDone: () async {
+                    await _executeVideoGeneration();
+                  },
+                  from: 'generate_video',
+                ),
           ),
-        ),
-      );
-      return;
+        );
+        return;
+      }
     }
 
     await _executeVideoGeneration();
@@ -271,17 +284,34 @@ class _VideoScrollScreenState extends ConsumerState<VideoScrollScreen>
   Future<void> _executeVideoGeneration() async {
     final video = _allVideos[_currentIndex];
     final generator = ref.read(videoGenerateProvider.notifier);
-
     final imagePath = _pickedImage!.path;
 
     await generator.generate(context, video, imagePath);
 
+    // 🔥 CRITICAL: Check mounted BEFORE reading provider state
+    if (!mounted) {
+      showLog('⛔ Widget unmounted during generation, skipping cleanup');
+      return;
+    }
+
+    // Now safe to read provider
     final genState = ref.read(videoGenerateProvider);
 
-    if (genState.errorMessage != null && mounted) {
+    // Check if task moved to background
+    final bgTask = ref.read(backgroundTaskProvider);
+    if (bgTask.hasActiveTask) {
+      showLog('✅ Task moved to background, skipping error handling');
+      setState(() {
+        _pickedImage = null;
+      });
+      return;
+    }
+
+    // Handle foreground errors
+    if (genState.errorMessage != null) {
       showToast(getTranslated(context)!.someThingWentWrong);
       showLog(genState.errorMessage.toString());
-    } else if (mounted) {
+    } else {
       setState(() {
         _pickedImage = null;
       });
@@ -597,8 +627,6 @@ class _VideoScrollScreenState extends ConsumerState<VideoScrollScreen>
                       ),
                     ),
                   ),
-
-                  // Heart Animation
                   AnimatedOpacity(
                     opacity: _showHeart ? 1 : 0,
                     duration: const Duration(milliseconds: 200),
@@ -850,14 +878,14 @@ class _VideoScrollScreenState extends ConsumerState<VideoScrollScreen>
                           children: [
                             Icon(
                               isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: isLiked ? Colors.white : Colors.white,
+                              color: isLiked ? Colors.red : Colors.black,
                               size: 80.sp,
                             ),
                             5.verticalSpace,
                             Text(
                               _formatLikeCount(displayCount),
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Colors.black,
                                 fontSize: 35.sp,
                                 fontWeight: FontWeight.w600,
                               ),

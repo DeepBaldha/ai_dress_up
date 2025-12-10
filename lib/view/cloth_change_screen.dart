@@ -16,6 +16,8 @@ import '../ads/ads_load_util.dart';
 import '../utils/utils.dart';
 import 'dart:io';
 
+import 'credit_premium_screen.dart';
+
 class ClothChangeScreen extends ConsumerStatefulWidget {
   const ClothChangeScreen({
     super.key,
@@ -23,7 +25,7 @@ class ClothChangeScreen extends ConsumerStatefulWidget {
     required this.selectedIndex,
   });
 
-  final List<Map<String, String>> clothItems; // FULL MAP (url + name)
+  final List<Map<String, String>> clothItems;
   final int selectedIndex;
 
   @override
@@ -35,6 +37,32 @@ class _ClothChangeScreenState extends ConsumerState<ClothChangeScreen> {
   late ScrollController _scrollController;
   bool _isUserScrolling = false;
   File? userImage;
+
+  Future<void> _pickImageCheck() async {
+    final creditNotifier = ref.read(creditProvider.notifier);
+    final requiredCredit = GlobalVariables.clothChangeCredit;
+
+    if (!creditNotifier.canAfford(requiredCredit)) {
+      showLog(
+        'Need $requiredCredit credit, but you have ${ref.read(creditProvider)}',
+      );
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreditPremiumScreen(
+            from: 'cloth_change',
+            onDone: () async {
+              await _pickUserImage();
+            },
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _pickUserImage();
+  }
 
   Future<void> _pickUserImage() async {
     final helper = ImagePickerHelper(context);
@@ -94,18 +122,14 @@ class _ClothChangeScreenState extends ConsumerState<ClothChangeScreen> {
 
   void _handleApplyOutfit() {
     if (userImage == null) {
-      _pickUserImage();
-      return;
-    }
-
-    final creditNotifier = ref.read(creditProvider.notifier);
-
-    if (!creditNotifier.canAfford(GlobalVariables.clothChangeCredit)) {
+      // Before picking image, check credit
+      _pickImageCheck();
       return;
     }
 
     _generateClothChange();
   }
+
 
   void _generateClothChange() {
     if (userImage == null) {

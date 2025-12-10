@@ -1,342 +1,249 @@
 import 'dart:async';
+import 'package:ai_dress_up/view_model/persistent_task_storage_service.dart';
+import 'package:ai_dress_up/view_model/video_result_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:path_provider/path_provider.dart';
 import '../api_services/sea_art_scrap_services.dart';
-import '../api_services/upload_image_to_seaart_service.dart';
 import '../model/video_model.dart';
+import '../utils/consts.dart';
 import '../utils/utils.dart';
-import 'credit_provider.dart';
-import 'free_usage_provider.dart';
 
-/// Background task state
-class BackgroundVideoTask {
-  final String taskId;
-  final VideoModel model;
-  final String imagePath;
-  final DateTime startTime;
+/// Background Task State
+class BackgroundTaskState {
+  final String? taskId;
+  final String? apiType;
+  final VideoModel? videoModel;
   final int progress; // 0-100
-  final String status; // 'processing', 'completed', 'failed'
+  final String status; // 'none', 'polling', 'downloading', 'completed', 'failed'
   final String? videoUrl;
+  final String? localVideoPath;
   final String? errorMessage;
-  final bool hasUserSeenResult;
 
-  const BackgroundVideoTask({
-    required this.taskId,
-    required this.model,
-    required this.imagePath,
-    required this.startTime,
+  const BackgroundTaskState({
+    this.taskId,
+    this.apiType,
+    this.videoModel,
     this.progress = 0,
-    this.status = 'processing',
+    this.status = 'none',
     this.videoUrl,
+    this.localVideoPath,
     this.errorMessage,
-    this.hasUserSeenResult = false,
   });
 
-  BackgroundVideoTask copyWith({
+  bool get hasActiveTask => status != 'none' && status != 'completed' && status != 'failed';
+  bool get isCompleted => status == 'completed';
+  bool get hasFailed => status == 'failed';
+
+  BackgroundTaskState copyWith({
+    String? taskId,
+    String? apiType,
+    VideoModel? videoModel,
     int? progress,
     String? status,
     String? videoUrl,
+    String? localVideoPath,
     String? errorMessage,
-    bool? hasUserSeenResult,
   }) {
-    return BackgroundVideoTask(
-      taskId: taskId,
-      model: model,
-      imagePath: imagePath,
-      startTime: startTime,
+    return BackgroundTaskState(
+      taskId: taskId ?? this.taskId,
+      apiType: apiType ?? this.apiType,
+      videoModel: videoModel ?? this.videoModel,
       progress: progress ?? this.progress,
       status: status ?? this.status,
       videoUrl: videoUrl ?? this.videoUrl,
+      localVideoPath: localVideoPath ?? this.localVideoPath,
       errorMessage: errorMessage ?? this.errorMessage,
-      hasUserSeenResult: hasUserSeenResult ?? this.hasUserSeenResult,
     );
   }
-
-  bool get isProcessing => status == 'processing';
-  bool get isCompleted => status == 'completed';
-  bool get isFailed => status == 'failed';
 }
 
-/// Background video generation state
-class BackgroundVideoState {
-  final BackgroundVideoTask? currentTask;
-
-  const BackgroundVideoState({this.currentTask});
-
-  BackgroundVideoState copyWith({
-    BackgroundVideoTask? currentTask,
-  }) {
-    return BackgroundVideoState(
-      currentTask: currentTask,
-    );
-  }
-
-  bool get isProcessing => currentTask?.isProcessing ?? false;
-  bool get hasTask => currentTask != null;
-}
-
-/// Background Video Generation Notifier
-class BackgroundVideoNotifier extends StateNotifier<BackgroundVideoState> {
+/// Background Task Notifier
+class BackgroundTaskNotifier extends StateNotifier<BackgroundTaskState> {
   final Ref ref;
-  Timer? _pollingTimer;
+  Timer? _pollTimer;
 
-  BackgroundVideoNotifier(this.ref) : super(const BackgroundVideoState());
+  BackgroundTaskNotifier(this.ref) : super(const BackgroundTaskState());
 
-  @override
-  void dispose() {
-    _pollingTimer?.cancel();
-    super.dispose();
-  }
-
-  /// Start background video generation
-  Future<void> startGeneration({
-    required BuildContext context,
-    required VideoModel model,
-    required String imagePath,
-  }) async {
-    if (state.isProcessing) {
-      showToast('A video is already being generated. Please wait.');
+  /// Start background task with taskId
+  void startBackgroundTask({
+    required String taskId,
+    required String apiType,
+    required VideoModel videoModel,
+  }) {
+    if (state.hasActiveTask) {
+      showLog('⚠️ Background task already running, cannot start new one');
       return;
     }
 
-    showLog('🚀 Starting background generation for ${model.title}');
+    showLog('🚀 Starting background task: $taskId');
 
-    // Check if video can be used for free
-    final freeVideoNotifier = ref.read(freeVideoUsageProvider.notifier);
-    final canUseFree = freeVideoNotifier.canUseFree(model);
-
-    if (canUseFree) {
-      await freeVideoNotifier.markAsUsed(model);
-      showLog('🎁 Using FREE video (one-time): ${model.userName}');
-    } else {
-      final creditNotifier = ref.read(creditProvider.notifier);
-      await creditNotifier.deductCredit(model.creditCharge);
-      showLog('💰 Deducted ${model.creditCharge} credits');
-    }
-
-    try {
-      // Step 1: Create task based on API type
-      String? taskId;
-
-      switch (model.apiType) {
-        case 'seaart_scrap_prompt':
-          taskId = await _createTaskForPrompt(model, imagePath);
-          break;
-        case 'seaart_scrap_tempid':
-          taskId = await _createTaskForTemplate(model, imagePath);
-          break;
-        case 'seaart_scrap_apply':
-          taskId = await _createTaskForApply(model, imagePath);
-          break;
-        default:
-          throw Exception('Background generation not supported for ${model.apiType}');
-      }
-
-      if (taskId == null) {
-        throw Exception('Failed to create video task');
-      }
-
-      showLog('✅ Task created: $taskId');
-
-      // Step 2: Create background task
-      final task = BackgroundVideoTask(
-        taskId: taskId,
-        model: model,
-        imagePath: imagePath,
-        startTime: DateTime.now(),
-      );
-
-      state = state.copyWith(currentTask: task);
-
-      // Step 3: Start polling
-      _startPolling();
-
-      showToast('Video generation started! You can navigate away.');
-    } catch (e) {
-      showLog('❌ Error starting generation: $e');
-
-      // Refund credits on error
-      await _refundCredits(model);
-
-      showToast('Failed to start generation: $e');
-      state = const BackgroundVideoState();
-    }
-  }
-
-  /// Create task for prompt-based generation
-  Future<String?> _createTaskForPrompt(VideoModel model, String imagePath) async {
-    final notifier = ref.read(seaArtScarpProvider.notifier);
-
-    // Upload image first
-    final uploadNotifier = ref.read(uploadImageToSeaArtProvider.notifier);
-    final imageUrl = await uploadNotifier.handleUpload(filePath: imagePath);
-
-    if (imageUrl == null) return null;
-
-    // Create task
-    return await notifier.createVideoTask(
-      imageUrl: imageUrl,
-      prompt: model.prompt,
-      modelNo: model.seaArtModelNo,
-      versionNo: model.seaArtVersionNo,
+    state = BackgroundTaskState(
+      taskId: taskId,
+      apiType: apiType,
+      videoModel: videoModel,
+      progress: 0,
+      status: 'polling',
     );
+
+    _startPolling();
   }
 
-  /// Create task for template-based generation
-  Future<String?> _createTaskForTemplate(VideoModel model, String imagePath) async {
-    final notifier = ref.read(seaArtScarpProvider.notifier);
-
-    final uploadNotifier = ref.read(uploadImageToSeaArtProvider.notifier);
-    final imageUrl = await uploadNotifier.handleUpload(filePath: imagePath);
-
-    if (imageUrl == null) return null;
-
-    return await notifier.createVideoTaskForTemplateId(
-      imageUrl: imageUrl,
-      templateId: model.seaArtTemplateId,
-    );
-  }
-
-  /// Create task for apply-based generation
-  Future<String?> _createTaskForApply(VideoModel model, String imagePath) async {
-    final notifier = ref.read(seaArtScarpProvider.notifier);
-
-    return await notifier.createVideoTaskForApplyId(
-      imagePath: imagePath,
-      videoModel: model,
-    );
-  }
-
-  /// Start polling for progress
+  /// Start polling SeaArt task
   void _startPolling() {
-    _pollingTimer?.cancel();
+    _pollTimer?.cancel();
 
-    _pollingTimer = Timer.periodic(const Duration(seconds: 8), (timer) async {
-      final task = state.currentTask;
-      if (task == null || !task.isProcessing) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (!state.hasActiveTask || state.taskId == null) {
         timer.cancel();
         return;
       }
 
-      await _pollProgress(task);
-    });
-
-    // Initial poll
-    Future.delayed(const Duration(seconds: 2), () {
-      if (state.currentTask?.isProcessing ?? false) {
-        _pollProgress(state.currentTask!);
-      }
+      await _pollOnce();
     });
   }
 
-  /// Poll progress from API
-  Future<void> _pollProgress(BackgroundVideoTask task) async {
+  /// Poll task once
+  Future<void> _pollOnce() async {
+    if (state.taskId == null) return;
+
     try {
-      final result = await _checkTaskProgress(task.taskId);
+      final seaArtNotifier = ref.read(seaArtScarpProvider.notifier);
+      final result = await seaArtNotifier.pollTaskOnce(state.taskId!);
 
-      if (result != null) {
-        final progress = result['progress'] as int;
-        final status = result['status'] as String;
-        final videoUrl = result['videoUrl'] as String?;
+      if (result == null) {
+        showLog('⚠️ Poll returned null, retrying...');
+        return;
+      }
 
-        showLog('📊 Task ${task.taskId}: $progress% ($status)');
+      final progress = result['progress'] as int;
+      final status = result['status'] as String;
+      final videoUrl = result['videoUrl'] as String?;
 
-        if (status == 'completed' && videoUrl != null) {
-          // Task completed
-          state = state.copyWith(
-            currentTask: task.copyWith(
-              progress: 100,
-              status: 'completed',
-              videoUrl: videoUrl,
-            ),
+      showLog('📊 Background poll: $progress% - $status');
+
+      state = state.copyWith(progress: progress);
+
+      if (status == 'completed' && videoUrl != null) {
+        _pollTimer?.cancel();
+        showLog('✅ Video generation completed: $videoUrl');
+        state = state.copyWith(
+          videoUrl: videoUrl,
+          status: 'downloading',
+        );
+
+        await _downloadVideo(videoUrl);
+      } else if (status == 'failed') {
+        _pollTimer?.cancel();
+        showLog('❌ Video generation failed');
+        state = state.copyWith(
+          status: 'failed',
+          errorMessage: 'Video generation failed',
+        );
+      }
+    } catch (e) {
+      showLog('❌ Background polling error: $e');
+      // Don't fail immediately, retry on next poll
+    }
+  }
+
+  /// Download video to local storage
+  Future<void> _downloadVideo(String videoUrl) async {
+    try {
+      showLog('⬇️ Starting background download...');
+
+      final dio = Dio();
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = 'video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final filePath = '${dir.path}/$fileName';
+
+      final response = await dio.download(
+        videoUrl,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            final downloadProgress = (received / total * 100).toInt();
+            state = state.copyWith(progress: downloadProgress);
+            showLog('📥 Download progress: $downloadProgress%');
+          }
+        },
+      );
+
+      if (response.statusCode == 200) {
+        showLog('✅ Download complete: $filePath');
+
+        // 🔥 AUTO-SAVE TO HISTORY
+        try {
+          showLog("💾 Auto-saving video to history...");
+          await ref.read(videoResultProvider).addVideo(
+            filePath,
+            title: 'Video ${DateTime.now().millisecondsSinceEpoch}',
+            thumbnailUrl: null,
           );
-
-          _pollingTimer?.cancel();
-          showLog('✅ Video generation completed!');
-
-          // Show notification or update UI
-          _notifyCompletion();
-        } else if (status == 'failed') {
-          // Task failed
-          state = state.copyWith(
-            currentTask: task.copyWith(
-              status: 'failed',
-              errorMessage: 'Video generation failed',
-            ),
-          );
-
-          _pollingTimer?.cancel();
-          await _refundCredits(task.model);
-          showLog('❌ Video generation failed');
-        } else {
-          // Still processing
-          state = state.copyWith(
-            currentTask: task.copyWith(progress: progress),
-          );
+          final context = navigatorKey.currentContext;
+          if (context != null && context.mounted) {
+            showToast(getTranslated(context)!.videoGeneratedSuccessfullyAndMovedToCreation);
+          }
+          await ref.read(persistentTaskStorageProvider).clearPendingTask();
+          showLog("✅ Auto-saved to history successfully");
+        } catch (e) {
+          showLog("❌ Auto-save failed: $e");
         }
+
+        state = state.copyWith(
+          status: 'completed',
+          localVideoPath: filePath,
+          progress: 100,
+        );
+      } else {
+        throw Exception('Download failed: ${response.statusCode}');
       }
     } catch (e) {
-      showLog('❌ Error polling progress: $e');
-    }
-  }
-
-  /// Check task progress via API
-  Future<Map<String, dynamic>?> _checkTaskProgress(String taskId) async {
-    try {
-      final notifier = ref.read(seaArtScarpProvider.notifier);
-
-      // Call the polling method once
-      final response = await notifier.pollTaskOnce(taskId);
-
-      return response;
-    } catch (e) {
-      showLog('❌ Error checking task progress: $e');
-      return null;
-    }
-  }
-
-  /// Notify user of completion
-  void _notifyCompletion() {
-    // You can add local notification here
-    showLog('🔔 Video generation completed! Ready to view.');
-  }
-
-  /// Mark result as seen by user
-  void markResultAsSeen() {
-    final task = state.currentTask;
-    if (task != null) {
+      showLog('❌ Download error: $e');
       state = state.copyWith(
-        currentTask: task.copyWith(hasUserSeenResult: true),
+        status: 'failed',
+        errorMessage: 'Download failed: $e',
       );
     }
   }
 
-  /// Clear current task
+  /// Clear completed/failed task
   void clearTask() {
-    _pollingTimer?.cancel();
-    state = const BackgroundVideoState();
+
+    if (state.hasActiveTask && !state.isCompleted && !state.hasFailed) {
+      showLog('⚠️ Cannot clear task - still running');
+      return;
+    }
+
+    showLog('🗑️ Clearing background task');
+    _pollTimer?.cancel();
+    state = const BackgroundTaskState();
   }
 
-  /// Refund credits on failure
-  Future<void> _refundCredits(VideoModel model) async {
-    final freeVideoNotifier = ref.read(freeVideoUsageProvider.notifier);
-    final wasFree = freeVideoNotifier.getUpdatedVideo(model).isOneTimeFree == false &&
-        model.isOneTimeFree == true;
+  /// Cancel active task
+  void cancelTask() {
+    showLog('🛑 Cancelling background task');
+    _pollTimer?.cancel();
 
-    if (wasFree) {
-      await ref.read(freeVideoStorageServiceProvider).removeUsedVideo(model.userName);
-      await freeVideoNotifier.refresh();
-      showLog('🔄 Restored FREE status for: ${model.userName}');
-    } else {
-      final creditNotifier = ref.read(creditProvider.notifier);
-      await creditNotifier.addCredit(model.creditCharge);
-      showLog('💸 Refunded ${model.creditCharge} credits due to error');
-    }
+    ref.read(persistentTaskStorageProvider).clearPendingTask();
+
+    state = state.copyWith(
+      status: 'failed',
+      errorMessage: 'Cancelled by user',
+    );
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 }
 
 /// Provider
-final backgroundVideoProvider = StateNotifierProvider<BackgroundVideoNotifier, BackgroundVideoState>((ref) {
-  return BackgroundVideoNotifier(ref);
+final backgroundTaskProvider =
+StateNotifierProvider<BackgroundTaskNotifier, BackgroundTaskState>((ref) {
+  return BackgroundTaskNotifier(ref);
 });

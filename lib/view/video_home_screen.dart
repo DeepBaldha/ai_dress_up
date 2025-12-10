@@ -6,7 +6,6 @@ import 'package:ai_dress_up/view/video_scroll_screen.dart';
 import '../utils/custom_widgets/deep_press_unpress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/firebase_analytics_service.dart';
-import 'package:image_picker/image_picker.dart';
 import '../view_model/free_usage_provider.dart';
 import '../view_model/video_like_provider.dart';
 import '../view_model/video_data_provider.dart';
@@ -28,6 +27,9 @@ class VideoHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _VideoHomeScreenState extends ConsumerState<VideoHomeScreen> {
+  List<VideoModel>? shuffledVideosCache;
+
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {});
@@ -68,7 +70,10 @@ class _VideoHomeScreenState extends ConsumerState<VideoHomeScreen> {
         ),
         child: SafeArea(
           child: videoState.when(
-            data: (videos) {
+            data: (result) {
+              final shuffled = result['shuffled'];
+              final videos = shuffled;
+
               if (videos.isEmpty) {
                 return const Center(
                   child: Text(

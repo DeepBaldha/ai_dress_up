@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
+import '../utils/custom_widgets/retrying_network_image.dart';
 import '../utils/firebase_analytics_service.dart';
 import '../view_model/credit_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -134,26 +135,14 @@ class _ClothCategoryScreenState extends State<ClothCategoryScreen> {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: CachedNetworkImage(
+                        child: RetryingNetworkImage(
                           imageUrl: url,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => Center(
-                            child: Lottie.asset(
-                              '${defaultImagePath}loader.json',
-                              width: 150.w,
-                            ),
-                          ),
-                          errorWidget: (_, __, ___) => Container(
-                            color: Colors.grey.shade900,
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.error,
-                              color: Colors.red,
-                              size: 40.sp,
-                            ),
-                          ),
+                          placeholderType: PlaceholderType.lottie,
+                          identifier: "background-image",
                         ),
                       ),
+
 
                       Positioned(
                         bottom: 15.h,

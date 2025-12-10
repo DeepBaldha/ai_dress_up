@@ -6,6 +6,7 @@ import '../utils/custom_widgets/deep_press_unpress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ai_dress_up/view/trending_screen.dart';
 import 'package:ai_dress_up/view/setting_screen.dart';
+import '../view_model/task_recovery_manager.dart';
 import '../view_model/video_data_provider.dart';
 import '../utils/shared_preference_utils.dart';
 import '../view_model/credit_provider.dart';
@@ -69,6 +70,7 @@ class _BottomNavigationScreenState
   }
 
   Future<void> setFirstTime() async {
+    ref.read(taskRecoveryManagerProvider).checkAndRecoverPendingTaskSilently();
     await SharedPreferenceUtils.saveBoolean("firstTime", false);
   }
 

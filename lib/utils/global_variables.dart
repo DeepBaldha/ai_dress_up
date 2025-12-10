@@ -24,8 +24,10 @@ class GlobalVariables {
   static int expandImageCredit = 5;
   static int hairChangeCredit = 5;
   static String segmindAPIKey = 'SG_5654e32e4822a860';
-  static String ailabApiKey = 'B33Gm8QwOXRouHJ5mqlSgJVTAy7zKWEz0tlUYtbNYLSf4vNIh9ABpPZH1s7nIaeU';
-  static String dezgoAPIKey = 'DEZGO-78FC999D00ABAF88A3824337AB9E5FAD8A11C1FC9AE13C7DFFFAE72682A61C7C2F24B84E';
+  static String ailabApiKey =
+      'B33Gm8QwOXRouHJ5mqlSgJVTAy7zKWEz0tlUYtbNYLSf4vNIh9ABpPZH1s7nIaeU';
+  static String dezgoAPIKey =
+      'DEZGO-78FC999D00ABAF88A3824337AB9E5FAD8A11C1FC9AE13C7DFFFAE72682A61C7C2F24B84E';
   static String getImageAPIKey =
       'key-1RH8bcRPBliVY5hbmNtyabQVTdtasRQa0oJ6Ig5y5ewVpV89wPRABulNVNaWXzNhUimi4WaceRAldk8y1ocoILgnImh9ZfpB';
   static String seaArtCookie =
@@ -62,10 +64,35 @@ class GlobalVariables {
   static String videoHomeURL =
       'https://phonexatechnologiesllc.com/MagicalVideoMaker/Deep_VidsMe_video/Dp_Vids_video_facebook/hot_video_facebook.json';
 
-  static String videoListTrendingURL =
-      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_video_play_store/hot_video_play_store.json';
-  static String videoListTrendingBaseURL =
-      'https://phonexatechnologiesllc.com/MagicalVideoMaker/Deep_VidsMe_video/Dp_Vids_video_facebook/';
+  static String clothChangeImagesPlayStoreURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+  static String clothChangeImagesPlayStoreBaseURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+
+  static String clothChangeImagesFacebookURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+  static String clothChangeImagesFacebookBaseURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+
+  static String clothChangeImagesGoogleURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+  static String clothChangeImagesGoogleBaseURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+
+  static String clothChangeMenWomenGoogleURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+  static String clothChangeMenWomenGoogleBaseURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+
+  static String clothChangeMenWomenFacebookURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+  static String clothChangeMenWomenFacebookBaseURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+
+  static String clothChangeMenWomenPlayStoreURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
+  static String clothChangeMenWomenPlayStoreBaseURL =
+      'https://phonexatechnologiesllc.com/MagicalVideoMaker/KBH_Deep_VidsMe_video/Dp_Vids_face_swap_image/face_swap_image.json';
 
   static bool showChestFeature = false;
   static bool showImageFeatures = true;
